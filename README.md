@@ -1,6 +1,6 @@
-# MS-DataScience
+# Portfolio of course work for my Master's in Data Science.
 
-Portfolio of course work for my Master's in Data Science.
+![alt text](https://raw.githubusercontent.com/bmoretz/MS-DataScience/master/media/ProgramOverview.png)
 
 Program Overview:
 
