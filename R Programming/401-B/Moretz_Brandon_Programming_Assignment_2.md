@@ -1,55 +1,19 @@
 ---
 title: 'Programming with R Assignment #2'
 author: "Moretz, Brandon"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+date: "05 November, 2018"
 output:
   html_document:
     toc: true
+    keep_md: yes
     toc_float: true
     theme: spacelab
     df_print: paged
 ---
 
-```{r setup, include=FALSE}
-# DO NOT ADD OR REVISE CODE HERE
-knitr::opts_chunk$set(echo = TRUE, eval = TRUE)
-```
 
-```{r analysis_setup, message = FALSE, warning = FALSE, echo = F}
 
-library(data.table, quietly = TRUE, warn.conflicts = FALSE)
 
-assignInNamespace("cedta.pkgEvalsUserCode", c(data.table:::cedta.pkgEvalsUserCode, "rtvs"), "data.table")
-
-library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
-library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
-library(ggthemes, quietly = TRUE, warn.conflicts = FALSE)
-library(gridExtra, quietly = TRUE, warn.conflicts = FALSE)
-library(kableExtra, quietly = TRUE, warn.conflicts = FALSE)
-library(GGally, quietly = TRUE, warn.conflicts = FALSE)
-library(knitr, quietly = TRUE, warn.conflicts = FALSE)
-library(RColorBrewer, quietly = TRUE, warn.conflicts = FALSE)
-library(moments, quietly = TRUE, warn.conflicts = FALSE)
-
-theme_set(theme_light())
-
-# Theme Overrides
-theme_update(plot.title = element_text(hjust = 0.5),
-			 axis.text.x = element_text(size = 10),
-			 axis.text.y = element_text(size = 10),
-			 axis.title = element_text(face = "bold", size = 12, colour = "steelblue4"),
-			 legend.position = "top", legend.title = element_blank())
-
-pretty_kable <- function(data, title, dig = 2) {
-	kable(data, caption = title, digits = dig, big.mark = "'") %>%
-		kable_styling(bootstrap_options = c("striped", "hover"))
-}
-
-pretty_vector <- function(vec, label = "") {
-	pander::pander(vec)
-}
-
-```
 
 # Alternative Assignment Items
 
@@ -68,8 +32,8 @@ _Samples from a normal distribution will depart from these values._
 
 The function defined below may be used to generate the samples for a given *n*. This function produces a 1000 x *n* dimensional array. Use three different samples size:  10, 40 and 160.
 
-```{r exampleFunction}
 
+```r
 generate <- function(n){
   set.seed(123)
   result <- matrix(0, nrow = 1000, ncol = n)
@@ -82,11 +46,10 @@ generate <- function(n){
 sample10 <- generate(10)
 sample40 <- generate(40)
 sample160 <-generate(160)
-
 ```
 
-```{r q1_utility}
 
+```r
 # Utility function for part a and b.
 
 getValueHist <- function(data, desc, cap) {
@@ -102,7 +65,6 @@ getValueHist <- function(data, desc, cap) {
 		labs(title = paste("Histogram of", desc), caption = cap) +
 		theme(axis.text.x = element_text(size = 8))
 }
-
 ```
 
 ### a.) Skewness
@@ -121,8 +83,8 @@ You will present the skewness results for n = 10, 40 and 160 as histograms, dete
 
 Load the "moments" package which supplies *skewness()* and *kurtosis()* functions.
 
-```{r ecp_skewness}
 
+```r
 getSkewness <- function(x) { 
     result <- apply(x, MARGIN = 1, FUN = skewness)
 
@@ -142,26 +104,65 @@ skew10 <- getSkewness(sample10)
 skew10.sd <- sd(skew10$Value)
 skew10.tsd <- theoretical_sd(10)
 getValueHist(skew10, "Skew10", q1a_cap)
+```
 
+![](figs/RP2-ecp_skewness-1.png)<!-- -->
+
+```r
 # Skew40
 skew40 <- getSkewness(sample40)
 skew40.sd <- sd(skew40$Value)
 skew40.tsd <- theoretical_sd(40)
 getValueHist(skew40, "Skew40", q1a_cap)
+```
 
+![](figs/RP2-ecp_skewness-2.png)<!-- -->
+
+```r
 # Skew 160
 skew160 <- getSkewness(sample160)
 skew160.sd <- sd(skew160$Value)
 skew160.tsd <- theoretical_sd(160)
 getValueHist(skew160, "Skew160", q1a_cap)
+```
 
+![](figs/RP2-ecp_skewness-3.png)<!-- -->
+
+```r
 results <- data.table(Size = c(10, 40, 160),
 	   StdDev = c(skew10.sd, skew40.sd, skew160.tsd),
        Theoretical = c(skew10.tsd, skew40.tsd, skew160.tsd))
 
 pretty_kable(results, "Standard Deviations of Skewness")
-
 ```
+
+<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
+<caption>Standard Deviations of Skewness</caption>
+ <thead>
+  <tr>
+   <th style="text-align:right;"> Size </th>
+   <th style="text-align:right;"> StdDev </th>
+   <th style="text-align:right;"> Theoretical </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:right;"> 10 </td>
+   <td style="text-align:right;"> 0.56 </td>
+   <td style="text-align:right;"> 0.58 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 40 </td>
+   <td style="text-align:right;"> 0.35 </td>
+   <td style="text-align:right;"> 0.36 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 160 </td>
+   <td style="text-align:right;"> 0.19 </td>
+   <td style="text-align:right;"> 0.19 </td>
+  </tr>
+</tbody>
+</table>
 
 ### b.) Kurtosis
 __(4 points)__ 
@@ -173,8 +174,8 @@ Using *sd()*, compute the sample standard deviations for the three random sample
 Show both sets of result side by side in a summary table.
 
 
-```{r ecp_kurtosis}
 
+```r
 getKurtosis <- function(x) {
 	result <- apply(x, MARGIN = 1, FUN = kurtosis)
 
@@ -194,26 +195,65 @@ kurt10 <- getKurtosis(sample10)
 kurt10.sd <- sd(kurt10$Value)
 kurt10.tsd <- theoretical_kt(10)
 getValueHist(kurt10, "Kurt10", q1b_cap)
+```
 
+![](figs/RP2-ecp_kurtosis-1.png)<!-- -->
+
+```r
 # Kurt40
 kurt40 <- getKurtosis(sample40)
 kurt40.sd <- sd(kurt40$Value)
 kurt40.tsd <- theoretical_kt(40)
 getValueHist(kurt40, "Kurt40", q1b_cap)
+```
 
+![](figs/RP2-ecp_kurtosis-2.png)<!-- -->
+
+```r
 # SKurt160
 kurt160 <- getKurtosis(sample160)
 kurt160.sd <- sd(skew160$Value)
 kurt160.tsd <- theoretical_kt(160)
 getValueHist(kurt160, "Kurt160", q1b_cap)
+```
 
+![](figs/RP2-ecp_kurtosis-3.png)<!-- -->
+
+```r
 results <- data.table(Size = c(10, 40, 160),
 	   StdDev = c(kurt10.sd, kurt40.sd, kurt160.tsd),
 	   Theoretical = c(kurt10.tsd, kurt40.tsd, kurt160.tsd))
 
 pretty_kable(results, "Standard Deviations of Kurtosis")
-
 ```
+
+<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
+<caption>Standard Deviations of Kurtosis</caption>
+ <thead>
+  <tr>
+   <th style="text-align:right;"> Size </th>
+   <th style="text-align:right;"> StdDev </th>
+   <th style="text-align:right;"> Theoretical </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:right;"> 10 </td>
+   <td style="text-align:right;"> 0.73 </td>
+   <td style="text-align:right;"> 0.75 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 40 </td>
+   <td style="text-align:right;"> 0.64 </td>
+   <td style="text-align:right;"> 0.64 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 160 </td>
+   <td style="text-align:right;"> 0.37 </td>
+   <td style="text-align:right;"> 0.37 </td>
+  </tr>
+</tbody>
+</table>
 
 ### c.) Observations
 __(2 points)__
@@ -235,10 +275,13 @@ values of the normal distribution, 0 and 3 respectively.
 This problem requires quartile calculations using random samples of different sizes from the standard normal distribution. The quartiles for the standard normal distribution 
 are (-0.6745, 0.0 and +0.6745), obtainable by *qnorm(c(0.25, 0.5, 0.75), mean = 0, sd = 1, lower.tail = TRUE)*.  This is illustrated below.
 
-```{r standardNormalQuartiles}
 
+```r
 qnorm(c(0.25, 0.5, 0.75), mean = 0, sd = 1, lower.tail = TRUE)
+```
 
+```
+## [1] -0.6744898  0.0000000  0.6744898
 ```
 
 ### a.) Variations
@@ -253,7 +296,8 @@ Display the results in a table for comparison purposes.
 
 _Take note of the results for the first and third quartile in particular._
 
-```{r ecp1}
+
+```r
 # Add your set.seed(), rnorm() and quantile() code to this code 'chunk'.
 # Use set.seed(127) prior to drawing a random sample each time.
 
@@ -293,8 +337,78 @@ get_quantiles <- function(x) {
 q2.a <- rbind(get_quantiles(S_25), get_quantiles(S_50), get_quantiles(S_100))
 
 pretty_kable(q2.a, "Sample Quantiles", 5)
-
 ```
+
+<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
+<caption>Sample Quantiles</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> size </th>
+   <th style="text-align:left;"> type </th>
+   <th style="text-align:right;"> 0% </th>
+   <th style="text-align:right;"> 25% </th>
+   <th style="text-align:right;"> 50% </th>
+   <th style="text-align:right;"> 75% </th>
+   <th style="text-align:right;"> 100% </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> 25 </td>
+   <td style="text-align:left;"> BS </td>
+   <td style="text-align:right;"> -1.73947 </td>
+   <td style="text-align:right;"> -0.49394 </td>
+   <td style="text-align:right;"> -0.02981 </td>
+   <td style="text-align:right;"> 0.60593 </td>
+   <td style="text-align:right;"> 1.33169 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 25 </td>
+   <td style="text-align:left;"> R </td>
+   <td style="text-align:right;"> -1.73947 </td>
+   <td style="text-align:right;"> -0.49394 </td>
+   <td style="text-align:right;"> -0.02981 </td>
+   <td style="text-align:right;"> 0.60593 </td>
+   <td style="text-align:right;"> 1.33169 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 50 </td>
+   <td style="text-align:left;"> BS </td>
+   <td style="text-align:right;"> -1.98422 </td>
+   <td style="text-align:right;"> -0.74936 </td>
+   <td style="text-align:right;"> -0.13061 </td>
+   <td style="text-align:right;"> 0.56462 </td>
+   <td style="text-align:right;"> 1.76871 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 50 </td>
+   <td style="text-align:left;"> R </td>
+   <td style="text-align:right;"> -1.98422 </td>
+   <td style="text-align:right;"> -0.74763 </td>
+   <td style="text-align:right;"> -0.13061 </td>
+   <td style="text-align:right;"> 0.53368 </td>
+   <td style="text-align:right;"> 1.76871 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 100 </td>
+   <td style="text-align:left;"> BS </td>
+   <td style="text-align:right;"> -1.98422 </td>
+   <td style="text-align:right;"> -0.67149 </td>
+   <td style="text-align:right;"> 0.00247 </td>
+   <td style="text-align:right;"> 0.72569 </td>
+   <td style="text-align:right;"> 2.87373 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 100 </td>
+   <td style="text-align:left;"> R </td>
+   <td style="text-align:right;"> -1.98422 </td>
+   <td style="text-align:right;"> -0.64796 </td>
+   <td style="text-align:right;"> 0.00247 </td>
+   <td style="text-align:right;"> 0.71264 </td>
+   <td style="text-align:right;"> 2.87373 </td>
+  </tr>
+</tbody>
+</table>
 
 The central limit theorem can be used to derive a quantile estimate standard deviation formula.  It estimates the standard deviation of the sampling distribution of any given sample quantile. This formula is valid for a known continuous density function.  It is a function of that density function, quantile probabilities and sample size. 
 
@@ -302,8 +416,8 @@ In the limit, as the sample size increases, a quantile estimate will have a norm
 
 For a selected coverage level, such formulas may be used to superimpose boundary curves on the plots produced in Part 1.  Execute the code below which illustrates this for the estimate of the median.  Since the central limit theorem promises convergence to normality, these curves are constructed to contain 95% of the median estimates for each sample size. Similar curves may be constructed for quartile estimates. 
 
-```{r boundaries}
 
+```r
 set.seed(127)
 quant <- numeric(0)
 for (k in seq(from = 25, to = 5000, by = 25)){
@@ -320,14 +434,16 @@ plot(size, quant, main = "Median Estimates versus Sample Size", xlab = "Sample S
 abline(h = 0.0)
 lines(size, c1*sqrt(0.5*0.5/(size*dnorm(0,0,1)**2)), col = "red")
 lines(size, c2*sqrt(0.5*0.5/(size*dnorm(0,0,1)**2)), col = "red")
-
 ```
+
+![](figs/RP2-boundaries-1.png)<!-- -->
 
 ### b.)
 __(3 points)__
 
 
-```{r scatter_plot}
+
+```r
 # utility function for scatter in a and b.
 getValueScatter <- function(data, desc, cap, ylimit, true_value) {
 
@@ -339,12 +455,12 @@ getValueScatter <- function(data, desc, cap, ylimit, true_value) {
 		labs(title = desc, caption = cap) +
 	    theme(legend.text = element_blank())
 }
-
 ```
 
 Using code based on the example above, generate scatterplots showing the sample quartile values for the first and third quartiles calculated using type = 7 for the sample sizes in *seq(from = 25, to = 5000, by = 25)*. Do not add the curved boundary lines. For these plots use *ylim = c(-0.4, -0.9)* for the first quartile, and *ylim = c(0.4, 0.9)* for the third quartile. Give consideration to color, titles and legends.
 
-```{r plot}
+
+```r
 # Add your set.seed(), rnorm() and quantile() code to this code 'chunk'.
 # Only use set.seed(127) once at the beginning of your code 'chunk'.
 
@@ -368,7 +484,11 @@ getValueScatter(data.table(Size = size, Value = getQuartileValues(.25)),
 	"MSDS 401: R Programming 2, Q2.a",
 	c(-0.4, -0.9),
     qnorm(.25))
+```
 
+![](figs/RP2-plot-1.png)<!-- -->
+
+```r
 # 3rd Quartile
 
 getValueScatter(data.table(Size = size, Value = getQuartileValues(.75)),
@@ -376,8 +496,9 @@ getValueScatter(data.table(Size = size, Value = getQuartileValues(.75)),
 	"MSDS 401: R Programming 2, Q2.b",
 	c(0.4, 0.9),
     qnorm(.75))
-
 ```
+
+![](figs/RP2-plot-2.png)<!-- -->
 
 ### c.)
 __(3 points)__
@@ -399,8 +520,8 @@ right-skewed and are not derived from a normal distribution.
 
 The following code 'chunk' defines the vector "mag" with the earthquake magnitudes, and illustrates evidence of non-normality.
 
-```{r mag}
 
+```r
 mag <- c(0.70, 0.74, 0.64, 0.39, 0.70, 2.20, 1.98, 0.64, 1.22, 0.20, 1.64, 1.02, 
          2.95, 0.90, 1.76, 1.00, 1.05, 0.10, 3.45, 1.56, 1.62, 1.83, 0.99, 1.56,
          0.40, 1.28, 0.83, 1.24, 0.54, 1.44, 0.92, 1.00, 0.79, 0.79, 1.54, 1.00,
@@ -410,12 +531,18 @@ mag <- c(0.70, 0.74, 0.64, 0.39, 0.70, 2.20, 1.98, 0.64, 1.22, 0.20, 1.64, 1.02,
 par(mfrow = c(1,2))
 hist(mag)
 boxplot(mag)
+```
+
+![](figs/RP2-mag-1.png)<!-- -->
+
+```r
 par(mfrow = c(1,1))
 
 qqnorm(mag)
 qqline(mag)
-
 ```
+
+![](figs/RP2-mag-2.png)<!-- -->
 
 ### a.) Chi-Squared
 __(2 points)__
@@ -425,8 +552,8 @@ calculated using the *var()* function. You will need to add code calculating a 9
 
 _This assumes normality._
 
-```{r chiSquareVariance}
 
+```r
 n <- length(mag)
 conf.level = 0.95
 
@@ -436,8 +563,9 @@ chiupper <- qchisq((1 - conf.level) / 2, df, lower.tail = FALSE)
 v <- var(mag)
 conf.int <- c(df * v / chiupper, df * v / chilower)
 pretty_vector(round(conf.int, 2))
-
 ```
+
+_0.31_ and _0.68_
 
 There is an extensive literature on bootstrapping. The methods shown here give an indication of the possibilities for estimating confidence intervals for a wide range of parameters. 
 Some literature citations will be mentioned. 
@@ -454,8 +582,8 @@ percentile bootstrap confidence interval.
 
 Present a table displaying the chi-square confidence interval and the bootstrap confidence interval.
 
-```{r bootstrapVariance}
 
+```r
 set.seed(123)
 
 n <- 50
@@ -468,10 +596,36 @@ q3a_cap <- "MSDS 401: R Programming 2, Q3.b"
 
 # Bootstrap Hist
 getValueHist(bootstrap.variance, paste("Bootstrap Variance"), q3a_cap)
-
-pretty_kable( rbind(c(Method = "Chi-Squared",round(conf.int, 3)),c( Method = "Bootstrap", bootstrap.quantiles)), "Confidence Interval Comparison" )
-
 ```
+
+![](figs/RP2-bootstrapVariance-1.png)<!-- -->
+
+```r
+pretty_kable( rbind(c(Method = "Chi-Squared",round(conf.int, 3)),c( Method = "Bootstrap", bootstrap.quantiles)), "Confidence Interval Comparison" )
+```
+
+<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
+<caption>Confidence Interval Comparison</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> Method </th>
+   <th style="text-align:left;">  </th>
+   <th style="text-align:left;">  </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Chi-Squared </td>
+   <td style="text-align:left;"> 0.307 </td>
+   <td style="text-align:left;"> 0.683 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Bootstrap </td>
+   <td style="text-align:left;"> 0.23 </td>
+   <td style="text-align:left;"> 0.684 </td>
+  </tr>
+</tbody>
+</table>
 
 ### c.) Analysis
 __(2 points)__
@@ -486,13 +640,12 @@ the true distribution of mag is normal, and I believe the bootstrap method to be
 This next part requires using the "boot" package discussed in Kabacoff Section 12.6, pages 292-298. The "boot" package requires a function be written to return the sample variance 
 values for each individual resample drawn. Use the following function in *boot()* for the argument "statistic." This function is defined for you below.
 
-```{r fFunction}
 
+```r
 f <- function(data, i){
   d <- data[i]
   return(var(d))
 }
-
 ```
 
 ### d.) boot pkg
@@ -503,7 +656,8 @@ The element "t" of this list is the vector of sample variances. This vector may 
 
 Again, please keep *set.seed(123)*.
 
-```{r boot}
+
+```r
 library(boot)  # install.packages("boot")
 set.seed(123)
 
@@ -511,7 +665,6 @@ set.seed(123)
 # and R = 10000. For calculating the quantiles, you will need to refer to the vector of results via "$t".
 
 results <- boot(mag, statistic = f, R = 10000)
-
 ```
 
 The "boot" package has a variety of options for determining confidence intervals. See *boot.ci()*, shown below, with the percentile option. The different computational options may produce 
@@ -520,12 +673,19 @@ slightly different results depending on the number of samples drawn during boots
 For example, we could use *boot.ci()*. To do this, we need to pass the object defined above by *boot()*, specifying "conf = 0.95" and "type = "perc". *boot.ci()* calculates confidence 
 intervals and stores them at "$percent" of the output. Present the output of the described *boot.ci()* call.
 
-```{r bootci}
+
+```r
 # Add your code here.
 
 pretty_vector( boot.ci(results, conf = 0.95, type = "perc")$percent )
-
 ```
+
+
+------------------------------------------
+ conf   &nbsp;   &nbsp;   &nbsp;   &nbsp; 
+------ -------- -------- -------- --------
+ 0.95    250      9751    0.2276   0.6892 
+------------------------------------------
 
 -----
 
@@ -542,8 +702,8 @@ Use the data provided and construct the data frame "test" with the code below.  
 
 __Do not change the order of the two test entries or the matching per student will not be correct__
 
-```{r testFile}
 
+```r
 testA <- c(58,49.7,51.4,51.8,57.5,52.4,47.8,45.7,51.7,46,50.4,61.9,49.6,61.6,54,54.9,49.7,
            47.9,59.8,52.3,48.4,49.1,53.7,48.4,47.6,50.8,58.2,59.8,42.7,47.8,51.4,50.9,49.4,
            64.1,51.7,48.7,48.3,46.1,47.3,57.7,41.8,51.5,46.9,42,50.5,46.3,44,59.3,52.8)
@@ -554,10 +714,33 @@ testB <- c(56.1,51.5,52.8,52.5,57.4,53.86,48.5,49.8,53.9,49.3,51.8,60,51.4,60.2,
 test <- as.data.frame(cbind(testA,testB))
 
 str(test)
-summary(test)
-plot(test$testA,test$testB)
+```
 
 ```
+## 'data.frame':	49 obs. of  2 variables:
+##  $ testA: num  58 49.7 51.4 51.8 57.5 52.4 47.8 45.7 51.7 46 ...
+##  $ testB: num  56.1 51.5 52.8 52.5 57.4 ...
+```
+
+```r
+summary(test)
+```
+
+```
+##      testA           testB      
+##  Min.   :41.80   Min.   :44.30  
+##  1st Qu.:47.80   1st Qu.:49.30  
+##  Median :50.50   Median :51.40  
+##  Mean   :51.25   Mean   :51.95  
+##  3rd Qu.:53.70   3rd Qu.:53.80  
+##  Max.   :64.10   Max.   :60.20
+```
+
+```r
+plot(test$testA,test$testB)
+```
+
+![](figs/RP2-testFile-1.png)<!-- -->
 
 ### a.) Fisher's Z
 __(3 points)__
@@ -565,8 +748,8 @@ __(3 points)__
 Determine a 95% confidence interval for the Pearson Correlation Coefficient of the data in "test" using Fisher's method. Present the code and the confidence interval for rho, 
 the Pearson Correlation Coefficient. Calculations can be simplified using *tanh()* and *atanh()*. Also, submit the data to *cor.test()* and present those results as well.
 
-```{r correlation}
 
+```r
 len_a <- length(test$testA)
 len_b <- length(test$testB)
 
@@ -587,9 +770,31 @@ ci_lower <- (exp(2 * lower_ci) - 1) / (exp(2 * lower_ci) + 1)
 ci_upper <- (exp(2 * upper_ci) - 1) / (exp(2 * upper_ci) + 1)
 
 pretty_vector(c(Lower = ci_lower, Cor = correlation, Upper = ci_upper), label = "95% confidence interval")
+```
 
+
+--------------------------
+ Lower     Cor     Upper  
+-------- -------- --------
+ 0.9113   0.9492   0.9712 
+--------------------------
+
+```r
 cor.test(test$testA, test$testB, method = "p")
+```
 
+```
+## 
+## 	Pearson's product-moment correlation
+## 
+## data:  test$testA and test$testB
+## t = 20.69, df = 47, p-value < 2.2e-16
+## alternative hypothesis: true correlation is not equal to 0
+## 95 percent confidence interval:
+##  0.9113003 0.9712052
+## sample estimates:
+##       cor 
+## 0.9492478
 ```
 
 ### b.) Correlation Bootstrap
@@ -609,7 +814,8 @@ Refer to the course site library reserves and read the listing for Section 9.5 o
 You will write code which does this work. Use *set.seed(123)*. A "for" loop may be used to repeat the sampling and correlation coefficient calculations. Plot a histogram and report a 
 two-sided 95% confidence interval. 
 
-```{r bootstrapCorrelation}
+
+```r
 set.seed(123)
 
 sample_cor <- function() { 
@@ -621,10 +827,20 @@ test.cor.bootstrap <- as.data.table(replicate(10000, sample_cor(), simplify = "a
 
 getValueHist(test.cor.bootstrap, "Test Correlation", "MSDS 401 Q4.b") +
     theme(legend.text = element_blank())
-
-pretty_vector(c(quantile(test.cor.bootstrap$Value, 0.025), quantile(test.cor.bootstrap$Value, 0.975)))
-
 ```
+
+![](figs/RP2-bootstrapCorrelation-1.png)<!-- -->
+
+```r
+pretty_vector(c(quantile(test.cor.bootstrap$Value, 0.025), quantile(test.cor.bootstrap$Value, 0.975)))
+```
+
+
+-----------------
+  2.5%    97.5%  
+-------- --------
+ 0.9176   0.9688 
+-----------------
 
 ### c.) Regression
 __(5 points)__
@@ -644,7 +860,8 @@ Lastly, generate a scatter plot of the estimated bootstrap slopes versus the est
 
 _Place the intercepts on the x-axis and the slopes on the y-axis._
 
-```{r bootstrapLinearRegression}
+
+```r
 set.seed(123)
 
 sample_lm <- function() {
@@ -666,20 +883,29 @@ lm.intercept <- coef(simple.lm)[1]
 getValueHist(test.lm.bootstrap[, .(Value = Intercept)], paste("Intercept (Non-bootstrapped Value:", round(lm.intercept,3), ")"), "MSDS 401 Q4.c") +
 	geom_vline(xintercept = lm.intercept, lwd = 1.2, color = "darkgreen", linetype = 12) +
     theme(legend.text = element_blank())
+```
 
+![](figs/RP2-bootstrapLinearRegression-1.png)<!-- -->
+
+```r
 lm.slope <- coef(simple.lm)[2]
 
 getValueHist(test.lm.bootstrap[, .(Value = Slope)], paste("Slope, (Non-bootstrapped Value:", round(lm.slope, 3), ")"), "MSDS 401 Q4.c") +
 	geom_vline(xintercept = lm.slope, lwd = 1.2, color = "darkgreen", linetype = 12) +
 	theme(legend.text = element_blank())
+```
 
+![](figs/RP2-bootstrapLinearRegression-2.png)<!-- -->
+
+```r
 ggplot(test.lm.bootstrap, aes(x = Intercept, y = Slope)) +
 	geom_jitter(aes(color = Intercept)) +
 	geom_smooth(method = "lm", color = "firebrick") +
 	labs(title = "Scatter of Bootstrapped Intercept vs Slope", caption = "MSDS 401 Q4.c") +
 	theme(legend.text = element_blank())
-
 ```
+
+![](figs/RP2-bootstrapLinearRegression-3.png)<!-- -->
 
 ### d.) Analysis
 __(2 points)__
