@@ -4,15 +4,17 @@ author: "Moretz, Brandon"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
-    toc: true
-    toc_float: true
-    theme: spacelab
     df_print: paged
+    keep_md: yes
+    theme: spacelab
+    toc: yes
+    toc_float: yes
+  pdf_document:
+    toc: yes
 ---
 
 ```{r setup, include = FALSE}
-# DO NOT ADD OR REVISE CODE HERE
-knitr::opts_chunk$set(echo = FALSE, eval = TRUE)
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, fig.path = "figs/DA1-")
 
 ```
 
@@ -200,7 +202,7 @@ grid.arrange(p_shuck, p_rings, p_class, p_sex, ncol = 2)
 ```
 
 > The base data set contains a total of 8 variables; 5 continuous which are Length, Diameter, Height, Whole and Shuck, 1 discrete variable, Rings, and 
-2 categorical variables Sex and Class. Sex is a regular nominal value, ordering doesn’t not apply to this variable in general. The Class variable is a bit more interesting, 
+2 categorical variables Sex and Class. Sex is a regular nominal value, ordering doesn?t not apply to this variable in general. The Class variable is a bit more interesting, 
 in that is an ordered (Ordinal) level attribute that given to a given abalone based on the Rings attribute.
 <br/><br/>
 There are also two additional variables we explicitly add to the data for analysis, Volume and Ratio. Both variables are continuous because they are derived from 
@@ -305,7 +307,7 @@ Use "mydata" to plot __WHOLE__ versus __VOLUME__. Color code data points by __CL
 
 ggplot(mydata, aes(Volume, Whole, color = Class)) +
     geom_jitter() + # jitter to help with the overlap in the lower left near the origin
-    labs(title = "Whole weight, in grams | Volume cm³",
+    labs(title = "Whole weight, in grams | Volume cm?",
         x = "Volume", y = "Whole Weight",
         caption = "MSDS 401: Data Analysis 1, Q2.a")
 
@@ -705,11 +707,11 @@ _Based solely on these data, what are plausible statistical reasons that explain
 _Consider to what extent physical measurements may be used for age prediction._
 
 > It is not surprising to me that the original study failed to produce an accurate predictor of age from physical measurements given the characteristics of the data explore in this assignment. Initial 
-inspection of the overall summary of the sample provided at the beginning of this study suggest we have a relatively “good” sample of data. There is not an abundance of outliners in any 
+inspection of the overall summary of the sample provided at the beginning of this study suggest we have a relatively ?good? sample of data. There is not an abundance of outliners in any 
 metric, the sample is evenly distributed between age class and sex. The continuous variables all have well behaved distribution characteristics and the random sample from our initial population 
 conformed approximately to the overall dataset.
 <br/><br/>
-Abalone growth patterns as they relate to age class do not have an obvious relationship. As we saw in the “Growth Patterns” section in this study, we noted that abalone that have weight 
+Abalone growth patterns as they relate to age class do not have an obvious relationship. As we saw in the ?Growth Patterns? section in this study, we noted that abalone that have weight 
 over ~109.25 whole or ~51.25 shucked, are essentially randomly distributed above this area with no apparent commonality.
 <br/><br/>
 Taking a deeper look at abalones by their physical age classifier, rings, we also noted similar behavior. Abalone physical metrics like volume and whole weight by ring size seems to be 
