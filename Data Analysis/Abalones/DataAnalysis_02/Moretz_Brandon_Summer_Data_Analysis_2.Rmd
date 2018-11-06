@@ -1,19 +1,20 @@
 ---
-title: "Data Analysis #2"
+title: 'Data Analysis #2'
 author: "Moretz, Brandon"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
-    toc: true
-    toc_float: true
-    theme: spacelab
     df_print: paged
+    keep_md: yes
+    theme: spacelab
+    toc: yes
+    toc_float: yes
+  pdf_document:
+    toc: yes
 ---
 
 ```{r setup, include = FALSE}
-# DO NOT ADD OR REVISE CODE HERE
-knitr::opts_chunk$set(echo = FALSE, eval = TRUE, fig.width = 12)
-
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, fig.width = 12, fig.path = "figs/DA2-")
 ```
 
 # __Abalones__
@@ -938,9 +939,9 @@ Compare and discuss the three cutoffs determined in this assignment.
 
 __Answer:__
 
-The three various cutoffs represent distinct characteristics of a given harvest of abalones. The max difference method which is essentially the “brute force” solution here, I believe represents arguably the worst-case scenario. The true-positive rate is the lowest of the three, as well as the lowest overall harvest yield ratio. Although, this method does have the lowest false-positive rate as well.
+The three various cutoffs represent distinct characteristics of a given harvest of abalones. The max difference method which is essentially the ?brute force? solution here, I believe represents arguably the worst-case scenario. The true-positive rate is the lowest of the three, as well as the lowest overall harvest yield ratio. Although, this method does have the lowest false-positive rate as well.
 
-The Zero A1 Infants harvest has the benefit of having the highest true-positive harvest rate and overall harvest yield. The drawback here is that this method also leads to the highest rate of false-positives, meaning more infants will ultimately get harvested which isn’t ideal for future harvest and sustainability.
+The Zero A1 Infants harvest has the benefit of having the highest true-positive harvest rate and overall harvest yield. The drawback here is that this method also leads to the highest rate of false-positives, meaning more infants will ultimately get harvested which isn?t ideal for future harvest and sustainability.
 
 The equal error methodology is, as the name implies, right down the middle in terms of true-positive rate, false-positive rate, and overall harvest yield, essentially splitting max on the low end and Zero A1 on the high end (in terms of error).
 
