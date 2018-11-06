@@ -1,0 +1,15 @@
+
+Results from 10-fold cross-validation
+
+Method Area under ROC Curve:
+   Naive_Bayes  Logistic_Regression
+0         0.59                 0.61
+1         0.63                 0.68
+2         0.66                 0.69
+3         0.64                 0.64
+4         0.57                 0.60
+5         0.58                 0.61
+6         0.57                 0.61
+7         0.73                 0.77
+8         0.57                 0.57
+9         0.57                 0.57
