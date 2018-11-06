@@ -1,0 +1,526 @@
+---
+title: 'Moretz Brandon, Programming with R Assignment #1'
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: spacelab
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+# DO NOT ADD OR REVISE CODE HERE
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE)
+
+```
+
+```{r additional-libraries, echo=FALSE}
+
+library(pander)
+
+library(data.table, quietly = TRUE, warn.conflicts = FALSE)
+
+assignInNamespace("cedta.pkgEvalsUserCode", c(data.table:::cedta.pkgEvalsUserCode, "rtvs"), "data.table")
+
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggthemes, quietly = TRUE, warn.conflicts = FALSE)
+library(gridExtra, quietly = TRUE, warn.conflicts = FALSE)
+
+theme_set(theme_fivethirtyeight())
+
+# Theme Overrides
+theme_update(plot.title = element_text(hjust = 0.5),
+             plot.subtitle = element_text(hjust = 0.5),
+             axis.title = element_text( size = 10 ),
+             axis.text.x = element_text(face = "bold", size = 12),
+             axis.text.y = element_text(face = "bold", size = 12),
+             legend.position = "top", legend.title = element_blank())
+
+display_vector <- function(vec, label = "") {
+  pander::pander(vec)
+}
+
+```
+
+### Test Items
+
+Read each question carefully and address each element.  Do not output contents of vectors or data frames unless requested.
+
+## 1.) Vector Manipulations
+
+(4 points) This problem deals with vector manipulations.
+
+### a.) Concatenation
+
+Create a vector that contains the following, in this order, and __output the final, resulting vector__.
+
+__Do not round any values, unless requested.__
+
++ A sequence of integers from 0 to 4, inclusive.
++ The number 13
++ Three repetitions of the vector c(2, -5.1, -23).
++ The arithmetic sum of 7/42, 3 and 35/42
+
+```{r test1a}
+
+# Note: Parenthesis are not required in the final element. They are included for readability.
+values <- c(seq(from = 0, to = 4), 13, rep(c(2, -5.1, -23), 3), (7 / 42) + 3 + (35 / 42))
+
+display_vector(values)
+
+```
+
+### b.) Sorting
+
++ Sort the vector created in __(1)(a)__ in ascending order.  __Output this result__.  
++ Determine the length of the resulting vector and assign to "L". __Output L__. 
++ Generate a descending sequence starting with L and ending with 1.  
++ Add this descending sequence arithmetically the sorted vector. This is __vector addition__, _not vector combination_. __Output the contents__. 
+
+_Do not round any values._
+
+```{r test1b}
+
+values.sorted <- sort(values, decreasing = F)
+
+display_vector(values.sorted)
+
+L <- length(values.sorted)
+
+display_vector(L)
+
+values.desc <- seq(from = L, to = 1)
+
+result <- values.desc + values.sorted
+
+display_vector(result)
+
+```
+
+### c.) Subsetting
+
++ Extract the first and last elements of the vector you have created in __(1)(b)__ to form another vector with the extracted elements. 
++ Form a third vector from the elements not extracted. 
++ __Output these vectors__.
+
+```{r test1c}
+
+result.fl <- c(first(result), last(result))
+
+display_vector(result.fl)
+
+result.exc <- result[-which(result %in% result.fl)]
+
+display_vector(result.exc)
+
+```
+
+### d.) Reconstruction
+
++ Use the vectors from __(c)__ to reconstruct the vector in __(b)__.
++ __Output this vector__. 
++ Sum the elements and round to two decimal places.
+
+```{r test1d}
+
+result.d <- c(result.fl[1], result.exc, result.fl[2])
+
+stopifnot(all.equal(result,result.d))
+
+display_vector(result.d)
+
+display_vector(round(sum(result.d), 2))
+
+```
+
+-----
+
+## 2.) Trigonometric Function
+
+(5 points) The expression y = sin(x/2) + cos(x/2) is a trigonometric function.
+
+### a.) User-Defined Function
+
+Create a user-defined function - via *function()* - that implements the trigonometric function above, accepts numeric values, "x," 
+calculates and returns values "y."
+
+```{r test2a}
+
+trig_fun <- function(x) {
+    sin(x/2) + cos(x/2)
+}
+
+```
+
+### b.) Logical Subset
+
++ Create a vector, x, of 4001 equally-spaced values from -2 to 2, inclusive. 
+
++ Compute values for y using the vector x and your function from __(2)(a)__.  **Do not output x or y.**
+
++ Find the value in the vector x that corresponds to the __maximum__ value in the vector y. 
+Restrict attention to only the values of x and y you have computed; i.e. do not interpolate. 
+Round to 3 decimal places and output both the minimum y and corresponding x value.
+
++ Finding the two desired values can be accomplished in as few as two lines of code.  
+
+__Do not use packages or programs you may find on the internet or elsewhere.__
+
+__Do not output the other elements of the vectors x and y.__
+
+Use coding methods shown in the *Quick Start Guide for R*.
+
+```{r test2b}
+
+x <- seq(from = -2, to = 2, length.out = 4001)
+y <- trig_fun(x)
+
+max_y <- max(y)
+x_val <- x[y == max_y]
+
+stopifnot( trig_fun(x_val) == max_y )
+
+display_vector(round(c(x_val, max_y), digits = 3))
+
+```
+
+### c.) Visualization
+
++ Plot y versus x in color, with x on the horizontal axis. 
++ Show the location of the __maximum__ value of y determined in __2(b)__.  
++ Show the values of x and y corresponding to the __maximum__ value of y in the display.
++ Add a title and other features such as text annotations. 
+
+_Text annotations may be added via *text()* for base R plots and *geom_text()* or *geom_label()* for ggplots._
+
+```{r test2c}
+
+trig.data <- data.table(x,y)
+
+offset <- .125
+
+ggplot(trig.data, aes(x, y), label = "f(x)", show.legend = T) +
+	geom_line(color = "#00ba38", lwd = 2) +
+	geom_point(aes(x_val, max_y), color = "#f8766d", size = 3.5) +
+    annotate("text", x = x_val, y = max_y + offset, label = paste("max(Y) =", round(max_y,3 ))) + 
+    labs(title = "Trigonometric Function",
+       subtitle = paste("Max Y value (", round(max_y, 3), ") occures at x value (", round(x_val, 3), ")"),
+       caption = "MSDS 401: R Programming 1, Q2", x = "X", y = "Y")
+
+```
+
+-----
+
+## 3.) Function Intersection
+
+_(4 points)_ This problem requires finding the point of intersection of two functions. 
+Using the function `y = cos(x/2)*sin(x/2)`, 
+
++ find where the curved line `y = -(x/2)**3` intersects it within the range of values used in part (2) 
+_(i.e. 4001 equally-spaced values from -2 to 2)_.  
++ Plot both functions on the same display, and show the point of intersection. 
++ Present the coordinates of this point as text in the display.
+
+NOTE:  the functions to implement are enclosed in backticks. Ignore the backticks when implementing in code.
+
+
++ Plot both functions on the same display, and show the point of intersection.  
++ Present the coordinates of this point as text in the display.
+
+```{r test3}
+
+f1 <- function(x) {
+	cos(x / 2) * sin(x / 2)
+}
+
+f2 <- function(x) {
+    -(x / 2) ** 3
+}
+
+fun.values <- melt(data.table(x, y1 <- f1(x), y2 <- f2(x),
+   mid <- y2 + y1)[,
+        .(x, y1, y2, mid)], id = "x")
+
+
+offset <- .25
+
+fun.values$Type <- ifelse(fun.values$variable == 'mid', 'solid', 'dotdash')
+
+fun.intercept <- fun.values[variable == "mid" & value == 0,][, .(x, y = value)]
+
+ggplot(fun.values, aes(x = x, y = value, color = variable, linetype = Type, group = as.factor(variable))) +
+	geom_line(lwd = 1.4) +
+	geom_point(aes(x = fun.intercept$x, y = fun.intercept$y), size = 3, color = "#8E44AD", alpha = .8) +
+
+	# These two lines also mark the intersection.
+	geom_vline(xintercept = fun.intercept$x, linetype = 'longdash', alpha = .5, lwd = .25) +
+	geom_hline(yintercept = fun.intercept$y, linetype = 'longdash', alpha = .5, lwd = .25) +
+
+	# I think this looks better with text in the title area only, with the following line commented out.
+	# but wanted to make sure I followed instructions.
+	annotate("text", x = fun.intercept$x, y = fun.intercept$y + offset, parse = TRUE, label = paste0("Intersect (", fun.intercept$x, ",", fun.intercept$y, ")")) +
+    scale_linetype(guide = 'none') +
+    labs(title = "Function Intersection",
+       subtitle = paste0("Intersection occurs at point: (", fun.intercept$x, ",", fun.intercept$y, ")"),
+       caption = "MSDS 401: R Programming 1, Q3", x = "X", y = "Y")
+
+```
+
+-----
+
+## 4.) Trees
+
+(6 points) Use the "trees" dataset for the following items.
+
+_This dataset has three variables (Girth, Height, Volume) on 31 felled black cherry trees._
+
+### a.) Dataset
+
++ Use *data(trees)* to load the dataset. 
++ Check and output the structure with *str()*. 
++ Use *apply()* to return the median values for the three variables. __Output these values__.  
++ Using R and logicals, output the row number and the three measurements - Girth, Height and Volume - of any trees with Girth equal to median Girth. 
+
+_It is possible to accomplish this last request with one line of code._ 
+
+```{r test3a}
+
+# same as data(trees)
+trees <- as.data.table(trees)
+
+str(trees)
+
+# base R way
+base_medians <- apply(trees, 2, median)
+
+# data.table way
+medians <- trees[, lapply(.SD, median, na.rm = TRUE)]
+
+medians[, .(Girth, Height, Volume)] # display medians
+
+trees[, Row := .I][Girth == medians$Girth][, .(Row, Girth, Height, Volume)] # 1 liner
+
+```
+
+### b.) Calculation
+
+Girth is defined as the diameter of a tree taken at 4 feet 6 inches from the ground. 
+
++ Convert each diameter to a radius, r. 
++ Calculate the cross-sectional area of each tree using pi times the squared radius. 
++ Present a stem-and-leaf plot of the radii, and a histogram of the radii in color. 
++ Plot Area (y-axis) versus Radius (x-axis) in color showing the individual data points. 
+
+_Label appropriately._
+
+```{r test3b}
+
+trees[, Radius := Girth / 2][, Area := pi* Radius ** 2 ]
+
+stem(trees$Radius)
+
+ggplot(trees, aes(Radius, fill = ..count..)) +
+	geom_histogram(breaks = pretty(trees$Radius)) +
+	labs(title = "Tree Radii Distribution",
+	   caption = "MSDS 401: R Programming 1, Q4")
+
+ggplot(trees, aes(x = Radius, y = Area)) +
+	geom_point() +
+	labs(title = "Tree Girth",
+        subtitle = "Radis vs Area",
+	   caption = "MSDS 401: R Programming 1, Q4")
+
+```
+
+### c.) Visualization
+
++ Present a horizontal, notched, colored boxplot of the areas calculated in (b). Title and label the axis.
+
+```{r test3c}
+
+ggplot(trees, aes( "", y = Area)) +
+	geom_boxplot( outlier.colour = "red", fill = "#20D4EA", outlier.shape = 1, notch = T) +
+    coord_flip() +
+	labs(title = "Tree Area",
+	   caption = "MSDS 401: R Programming 1, Q4") +
+   	theme(axis.text.x = element_blank())
+
+```
+
+### d.) Statistical Test
+
++ Demonstrate that the outlier revealed in the boxplot of Volume is not an extreme outlier.  
+
+_It is possible to do this with one line of code using *boxplot.stats()* or 'manual' calculation and logicals._
+
++ Identify the tree with the largest area and output on one line its row number and three measurements.
+
+```{r test3d}
+
+ggplot(trees, aes("", y = Volume)) +
+	geom_boxplot(outlier.colour = "red", outlier.shape = 1, fill = "#20D4EA") +
+	coord_flip() +
+	labs(title = "Tree Volume",
+	   caption = "MSDS 401: R Programming 1, Q4") +
+   	theme(axis.text.x = element_blank())
+
+# manual calculation:
+
+ex_outlier_coef <- 3
+
+q1 <- quantile(trees$Volume, .25)
+q2 <- quantile(trees$Volume, .75)
+
+ex_outlier_range <- q2 + ex_outlier_coef * (q2 - q1)
+
+max_vol <- max(trees$Volume)
+
+max_vol > ex_outlier_range # Not extreme.
+
+# boxplot.stats method.
+
+vol_extremes <- boxplot.stats(trees$Volume, coef = ex_outlier_coef)
+vol_extremes$out # Not extreme.
+
+head(trees[order(-trees$Area)][, .(Row, Girth, Height, Volume)], 1) # 1 liner
+
+```
+
+-----
+
+## 5.) Exponential Distribution
+
+(6 points) The exponential distribution is an example of a right-skewed distribution with outliers.  
+This problem involves comparing it with a normal distribution which typically has very few outliers.  
+
+### a.) Distribution
+
++ Use *set.seed(124)* and *rexp()* with n = 100, rate = 5.5 to generate a random sample designated as y.  
++ Generate a second random sample designated as x with *set.seed(127)* and *rnorm()* using n = 100, mean = 0 and sd = 0.15.  
++ Generate a new object using *cbind(x, y)*. __Do not output this object__; instead, assign it to a new name. 
+Pass this object to *apply()* and compute the inter-quartile range (IQR) for each column:  x and y. 
++ Use the function *IQR()* for this purpose. __Round the results to four decimal places and present__ (this exercise shows the similarity of the IQR values.).
+
+_For information about *rexp()*, use *help(rexp)* or *?rexp()*.  **Do not output x or y.**_
+
+```{r test5a}
+
+set.seed(124)
+y <- rexp(n = 100, rate = 5.5)
+
+set.seed(127)
+x <- rnorm(n = 100, mean = 0, sd = 0.15)
+
+values <- cbind(x, y)
+
+sapply(apply(values, 2, IQR), FUN = function(val) { round( val, 4 )})
+
+```
+
+### b.) Visualization
+
+This item will illustrate the difference between a right-skewed distribution and a symmetric one. 
+
++ For base R plots, use *par(mfrow = c(2, 2))* to generate a display with four diagrams; *grid.arrange()* for ggplots. 
++ On the first row, for the normal results, present a histogram and a horizontal boxplot for x in color.  
++ For the exponential results, present a histogram and a horizontal boxplot for y in color.
+
+```{r test5b}
+
+values <- as.data.table(values)
+
+p1 <- ggplot(values, aes(x = x, fill = ..count..)) +
+	geom_histogram(breaks = pretty(values$x))
+
+p2 <- ggplot(values, aes("", x)) +
+	geom_boxplot(outlier.colour = "red", outlier.shape = 1, fill = "#20D4EA") +
+	coord_flip() +
+	theme(axis.text.x = element_blank())
+
+p3 <- ggplot(values, aes(x = y, fill = ..count..)) +
+	geom_histogram(breaks = pretty(values$y))
+
+p4 <- ggplot(values, aes("", y)) +
+	geom_boxplot(outlier.colour = "red", outlier.shape = 1, fill = "#20D4EA") +
+	coord_flip() +
+	theme(axis.text.x = element_blank())
+
+grid.arrange(p1, p2, newpage = TRUE, p3, p4, top = "Distributions")
+
+```
+
+### c.) QQ-Plot
+
+QQ plots are useful for detecting the presence of heavy-tailed distributions. 
+
++ Present side-by-side QQ plots, one for each sample, using *qqnorm()* and *qqline()*.  
++ Add color and titles. In base R plots, "cex" can be used to control the size of the plotted data points and text.
++ Lastly, determine if there are any extreme outliers in either sample.
+
+```{r test5c}
+
+# base R method. This is to ensure I followed instructions.
+
+opar = par(mfrow = c(1, 2))
+
+qqnorm(values$x, col = "black",  main = "Normal Distribution", xlab = "", ylab = "sample")
+qqline(values$x, lty = 2, lwd = 2, col = "blue")
+
+qqnorm(values$y, col = "black", main = "Exponential Distribution", xlab = "", ylab = "sample")
+qqline(values$y, lty = 2, lwd = 2, col = "blue")
+
+mtext("QQ Plot, Normal & Exponential", side = 3, line = -1.5, outer = TRUE)
+
+par(opar)
+
+# ggplot method, this is my perfered method which I believe to be identical.
+
+#' Title
+#' geom_qqline
+#' @param data - vector of data used to generate line.
+#' @param color - color of the qq line
+#' @param line_width - width of the qq line
+#' @param alpha - transparency of the qq line
+#' @param line_type - qq line display type
+#'
+#' @return geom object that can be used in ggplot layering. This should be identical to the qqline in base R,
+#' based upon by understanding of ?qqline
+#' @export
+#'
+#' @examples see below:
+geom_qqline <- function(data,
+    color = "red", line_width = 1, alpha = 1, line_type = "dashed") {
+
+    y <- quantile(data[!is.na(data)], c(0.25, 0.75))
+	x <- qnorm(c(0.25, 0.75))
+
+	# calculate slope and y-intercept
+	slope <- diff(y) / diff(x)
+	int <- first(y) - slope * first(x)
+
+	# qq-line, in ggplot form.
+  geom_abline(slope = slope, intercept = int, color = color, lwd = line_width, alpha = alpha, linetype = line_type)
+}
+
+q1 <- ggplot(values, aes(sample = x)) +
+	stat_qq() +
+	geom_qqline( values$x, color = "blue", alpha = .8 ) +
+	labs(title = "Normal Distribution", x = "")
+
+q2 <- ggplot(values, aes(sample = y)) +
+	stat_qq() +
+	geom_qqline( values$y, color = "blue", alpha = .8 ) +
+	labs(title = "Exponential Distribution", x = "")
+
+grid.arrange(q1, q2, ncol = 2, top = "QQ Plot, Normal & Exponential")
+
+# Detect any extreme outliers in x or y.
+x_extremes <- boxplot.stats(values$x, coef = ex_outlier_coef) # no extreme outliers
+x_extremes$out
+
+y_extremes <- boxplot.stats(values$y, coef = ex_outlier_coef) # 1 extreme outlier, 
+y_extremes$out
+
+```

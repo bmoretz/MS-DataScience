@@ -1,0 +1,287 @@
+---
+title: "Lesson 06: Continuous Distributions"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: spacelab
+    df_print: paged
+---
+
+```{r knitr-setup, include = FALSE}
+library(knitr)
+
+knitr::opts_chunk$set(eval = TRUE)
+
+opts_chunk$set(fig.align = "center", fig.height = 4, fig.width = 8) # for html
+opts_knit$set(progress = FALSE, verbose = TRUE)
+
+```
+
+
+```{r additional-libraries, echo=FALSE}
+
+library(data.table, quietly = TRUE, warn.conflicts = FALSE)
+
+assignInNamespace("cedta.pkgEvalsUserCode", c(data.table:::cedta.pkgEvalsUserCode, "rtvs"), "data.table")
+
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggthemes, quietly = TRUE, warn.conflicts = FALSE)
+library(gridExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(kableExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(GGally, quietly = TRUE, warn.conflicts = FALSE)
+library(knitr, quietly = TRUE, warn.conflicts = FALSE)
+library(RColorBrewer, quietly = TRUE, warn.conflicts = FALSE)
+library(moments, quietly = TRUE, warn.conflicts = FALSE)
+library(gplots, quietly = TRUE, warn.conflicts = FALSE)
+
+theme_set(theme_light())
+
+# Theme Overrides
+theme_update(plot.title = element_text(hjust = 0.5),
+			 axis.text.x = element_text(size = 10),
+			 axis.text.y = element_text(size = 10),
+			 axis.title = element_text(face = "bold", size = 12, colour = "steelblue4"),
+			 legend.position = "top", legend.title = element_blank())
+
+pretty_kable <- function(data, title, dig = 2) {
+	kable(data, caption = title, digits = dig, big.mark = "'") %>%
+		kable_styling(bootstrap_options = c("striped", "hover"))
+}
+
+pretty_vector <- function(vec, label = "") {
+	pander::pander(vec)
+}
+
+lp.w <- "E:/GitHub/R-Playground"
+lp.h <- "C:/Projects/R/Playground"
+
+if (file.exists(lp.w)) {
+	base.dir <- lp.w
+} else if (file.exists(lp.h)) {
+	base.dir <- lp.h
+}
+
+data.path <- paste0(base.dir, "/Classes/MSDS401/Exercises/_Data Files/")
+
+# simple replacement for read.csv that returns a data.table.
+loadDataFile <- function(file_name) {
+	data.raw <- fread(paste0(data.path, file_name),
+  header = TRUE, stringsAsFactors = FALSE, na.strings = c("NA", ""))
+
+	data <- setNames(data.raw, tools::toTitleCase(tolower(names(data.raw))))
+
+	return(data)
+}
+```
+
+## 1.) Shoppers
+
+Assume the purchases of shoppers in a store have been studied for a period of time and it is determined
+the daily purchases by individual shoppers are normally distributed with a mean of $81.14 and a
+standard deviation of $20.71. Find the following probabilities using R.
+
+### a.)
+
+
+```{r ex_1_vis}
+
+u <- 81.14
+sd <- 20.71
+
+x <- seq(from = u - ( sd * 3 ), to = u + ( sd * 3), by = 2.5)
+
+probs <- dnorm(x, u, sd)
+
+plot(x, probs, type = "h", lwd = 3, col = "blue",
+  main = "Shopping Distribution", xlab = "Spent", ylab = "Probability")
+abline(h = 0, col = "green2")
+curve(dnorm(x, u, sd), lwd = 2, col = "red", add = T)
+
+```
+
+> What is the probability that a randomly chosen shopper spends less than $75.00
+
+```{r ex_1_a, echo = T}
+
+q1a <- pnorm(75, mean = u, sd = sd, lower.tail = T)
+round(q1a, 4)
+
+```
+
+### b.)
+
+> What proportion of shoppers spends more than $100.00?
+
+```{r ex_1_b, echo = T}
+
+q1b <- pnorm(100, mean = u, sd = sd, lower.tail = F)
+round(q1b, 4)
+
+```
+
+### c.)
+
+> What proportion of shoppers spends between $50.00 and $100.00?
+
+```{r ex_1_c, echo = T}
+
+q1c <- pnorm(50, mean = u, sd = sd, lower.tail = F) - pnorm(100, mean = u, sd = sd, lower.tail = F)
+round(q1c, 4)
+
+```
+
+## 2.)
+
+Assume that the shopper’s purchases are normally distributed with a mean of $97.11 and a standard
+deviation of $39.46. Find the following scores using R.
+
+```{r ex_2_vis}
+
+u <- 97.11
+sd <- 39.46
+
+x <- seq(from = u - ( sd * 3 ), to = u + ( sd * 3), by = 2.5)
+
+probs <- dnorm(x, u, sd)
+
+plot(x, probs, type = "h", lwd = 3, col = "blue",
+  main = "Shopping Distribution", xlab = "Spent", ylab = "Probability")
+abline(h = 0, col = "green2")
+curve(dnorm(x, u, sd), lwd = 2, col = "red", add = T)
+
+```
+
+### a.) 
+
+> What weight is the 90th Percentile of the shoppers’ purchases? That is, find the score P90
+that separates the bottom 90% of shoppers’ purchases from the top 10%
+
+```{r ex_2_a, echo = T}
+
+qnorm(.9, u, sd = sd)
+
+```
+
+### b.)
+
+> What is the median shoppers’ purchase? (Find the score P50 that separates the bottom 50%
+of shoppers’ purchases from the top 50%.) What is important about this number?
+
+```{r ex_2_b, echo = T}
+
+qnorm(.5, u, sd)
+
+```
+
+## 3.)
+
++ Generate a sample of size 50 from a normal distribution with a mean of 100 and a standard deviation of 4.
+
++ What is the sample mean and sample standard deviation? Calculate the standard error of the mean for this sample. 
+Generate a second sample of size 50 from the same normal population. 
+
++ What is the sample mean and sample standard deviation? Calculate the standard error of the mean for this sample.
+
++ Compare your results. Are the sample means and sample standard deviations of random samples of the same size taken 
+from the same population identical? Why or why not?
+
++ Now, repeat this process generating a sample of size 5000. 
++ Calculate the sample mean, sample standard deviation and standard error of the mean for this third sample and compare to the
+previous samples.
+
+```{r ex_3, echo = T}
+
+set.seed(1234)
+
+n <- 50
+u <- 100
+sd <- 4
+d <- rnorm(n, u, sd)
+
+std_err <- sd / sqrt(n)
+
+sprintf("Sample Stats - Mean: %.4f, Std Dev: %.4f, Std Err: %.4f", mean(d), sd(d), std_err ) 
+
+d <- rnorm(n, u, sd)
+
+std_err <- sd / sqrt(n)
+
+sprintf("Sample Stats - Mean: %.4f, Std Dev: %.4f, Std Err: %.4f", mean(d), sd(d), std_err)
+
+n <- 5000
+d <- rnorm(n, u, sd)
+
+std_err <- sd / sqrt(n)
+
+sprintf("Sample Stats - Mean: %.4f, Std Dev: %.4f, Std Err: %.4f", mean(d), sd(d), std_err)
+
+```
+
+## 4.)
+
+Assume a biased coin when flipped will generate heads one third of the time. Estimate the probability
+of getting at least 250 heads out of 600 flips using the normal distribution approximation. Compare to
+the exact probability using the binomial distribution
+
+
+```{r ex_4, echo = T}
+
+# Normal approximation to the binomial uses z = (x - n*p)/sqrt(n * p * (1-p))
+n <- 600
+p <- 1 / 3
+x <- 250 # least 250 heads implies the upper tail of the standard normal distribution
+
+sprintf("%.6f", pbinom(q = x, size = n, prob = p, lower.tail = FALSE))
+
+# The normal approximation to the binomial is very close to the binomial.
+xCorrect <- 250 - 0.5
+z <- (xCorrect - n * p) / sqrt(n * p * (1 - p))
+sprintf("%.6f", pnorm(z, mean = 0, sd = 1, lower.tail = FALSE))
+
+```
+
+## 5.)
+
+Use the uniform distribution over 0 to 1. Generate three separate simple random samples of size n =
+25, n = 100, n = 400. Plot histograms for each and comment on what you observe.
+
+```{r ex_5, echo = T}
+
+unif_hist <- function(n, b) { 
+    d <- as.data.table(X <- runif(n, 0, 1))
+
+	ggplot(d, aes(x = X, fill = ..count..)) +
+	    geom_histogram( breaks = pretty(d$X), bins = b)
+}
+
+unif_hist(25, 15)
+unif_hist(100, 15)
+unif_hist(400, 15)
+
+```
+
+## 6.)
+
+salaries.csv gives the CEO age and salary for 60 small business firms. Construct QQ plots and histograms.
+Is the distribution of ages a normal distribution? Explain your answer.
+
+```{r ex_6, echo = T}
+
+salaries <- loadDataFile("salaries.csv")
+
+ggplot(salaries, aes(x = Age, fill = ..count..)) +
+	geom_histogram(breaks = pretty(salaries$Age)) +
+    labs(title = "Salary Distribution")
+
+ggplot(salaries, aes(x = Age)) +
+	geom_density()
+
+ggplot(salaries, aes(sample = Age)) +
+	stat_qq() +
+    stat_qq_line()
+
+
+```

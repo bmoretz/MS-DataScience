@@ -1,0 +1,244 @@
+---
+title: "Lesson 08: Statistical Inference Estimation for Single Populations"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: spacelab
+    df_print: paged
+---
+
+```{r knitr-setup, include = F}
+library(knitr)
+
+knitr::opts_chunk$set(eval = TRUE)
+
+opts_chunk$set(fig.align = "center", fig.height = 4, fig.width = 8) # for html
+opts_knit$set(progress = FALSE, verbose = TRUE)
+
+```
+
+```{r additional-libraries, echo=FALSE}
+
+library(data.table, quietly = TRUE, warn.conflicts = FALSE)
+
+assignInNamespace("cedta.pkgEvalsUserCode", c(data.table:::cedta.pkgEvalsUserCode, "rtvs"), "data.table")
+
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggthemes, quietly = TRUE, warn.conflicts = FALSE)
+library(gridExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(kableExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(GGally, quietly = TRUE, warn.conflicts = FALSE)
+library(knitr, quietly = TRUE, warn.conflicts = FALSE)
+library(RColorBrewer, quietly = TRUE, warn.conflicts = FALSE)
+library(moments, quietly = TRUE, warn.conflicts = FALSE)
+library(gplots, quietly = TRUE, warn.conflicts = FALSE)
+
+theme_set(theme_light())
+
+# Theme Overrides
+theme_update(plot.title = element_text(hjust = 0.5),
+			 axis.text.x = element_text(size = 10),
+			 axis.text.y = element_text(size = 10),
+			 axis.title = element_text(face = "bold", size = 12, colour = "steelblue4"),
+			 legend.position = "top", legend.title = element_blank())
+
+pretty_kable <- function(data, title, dig = 2) {
+	kable(data, caption = title, digits = dig, big.mark = "'") %>%
+		kable_styling(bootstrap_options = c("striped", "hover"))
+}
+
+pretty_vector <- function(vec, label = "") {
+	pander::pander(vec)
+}
+
+lp.w <- "E:/GitHub/R-Playground"
+lp.h <- "C:/Projects/R/Playground"
+
+if (file.exists(lp.w)) {
+	base.dir <- lp.w
+} else if (file.exists(lp.h)) {
+	base.dir <- lp.h
+}
+
+data.path <- paste0(base.dir, "/Classes/MSDS401/Exercises/_Data Files/")
+
+# simple replacement for read.csv that returns a data.table.
+loadDataFile <- function(file_name) {
+	data.raw <- fread(paste0(data.path, file_name),
+  header = TRUE, stringsAsFactors = FALSE, na.strings = c("NA", ""))
+
+	data <- setNames(data.raw, tools::toTitleCase(tolower(names(data.raw))))
+
+	return(data)
+}
+
+```
+
+```{r utility, include = F}
+
+normal_z <- function(pct, mean = 0, sd = 1) {
+    qnorm( 1 - (( 1 - pct ) / 2), mean, sd, lower.tail = T)
+}
+
+```
+
+# Estimation for Single Populations
+
+## 1.) Confidence Interval
+
+> Assume a random sample of size 100 is drawn from a normal distribution with variance 1. The average
+value of the sample is 50. Find a 95% confidence interval for the mean.
+
+```{r ex_1, echo=T}
+
+n <- 100 # sample size
+mean <- 50 # mean of sample
+sd <- sqrt(1) # standard deviation of population
+margin.of.error <- normal_z(.95) * sd / sqrt(n)
+
+conf.int <- c(mean - margin.of.error, mean + margin.of.error)
+
+pretty_vector( conf.int )
+
+```
+
+## 2.)
+
+> Assume the standard deviation for a normal distribution is equal to 100 units. Also assume we want
+to estimate the unknown mean with a 95% confidence interval of total width 8 units. Calculate the
+sample size required.
+
+
+```{r ex_2, echo=T}
+
+z_score <- qnorm(0.025, mean = 0, sd = 1, lower.tail = F)
+sample_size <- sample_size <- ( z_score * 100 / 4 ) ** 2
+
+pretty_vector(sample_size)
+
+```
+
+## 3.) 
+
+> A random sample of 1600 registered voters are contacted and asked a variety of questions. For one
+question, 60% of the voters expressed approval and 40% disapproval. Calculate a 95% confidence
+interval for the proportion expressing approval.
+
+
+```{r echo=T}
+
+# Here we will use a built-in R function for testing a proportion.
+# prop.test(x, n, p = NULL,
+# alternative = c("two.sided", "less", "greater"),
+# conf.level = 0.95, correct = TRUE
+# x a vector of counts of successes, a one-dimensional table with two entries,
+# or a two-dimensional table (or matrix) with 2 columns, giving the counts of
+# successes and failures, respectively.
+# n a vector of counts of trials; ignored if x is a matrix or a table.
+# p a vector of probabilities of success. The length of p must be the same
+# as the number of groups specified by x, and its elements must be greater
+# than 0 and less than 1.
+# alternative: a character string specifying the alternative hypothesis,
+# must be one of "two.sided" (default), "greater" or "less". You can specify
+# just the initial letter. Only used for testing the null that a single proportion
+# equals a given value, or that two proportions are equal; ignored otherwise.
+# conf.level: confidence level of the returned confidence interval.
+# Must be a single number between 0 and 1. Only used when testing the
+# null that a single proportion equals a given value, or that two proportions
+# are equal; ignored otherwise.
+# correct: a logical indicating whether Yates' continuity correction should be
+# applied where possible.
+
+prop_test_object <- prop.test(x = 1600 * 0.6, n = 1600,
+    alternative = "two.sided", conf.level = 0.95)
+
+str(prop_test_object)
+
+# Notice that this object is a list and the confidence interval lower
+# and uppler limits themselves can be extracted from the object as
+pretty_vector( as.numeric(prop_test_object$conf.int))
+
+```
+
+## 4.)
+
+> A random sample of consumers are presented with two beverages in random order and asked which
+they prefer most. All the consumers expressed a preference. One beverage was preferred 85% of the
+time. Use this number to determine how large a sample of consumers would be needed to generate a
+95% confidence interval with an overall width just less than 2% (i.e. from 84% to 86%)?
+
+```{r echo=T}
+
+p <- 0.85
+z_score <- qnorm(0.025, mean = 0, sd = 1, lower.tail = FALSE)
+sample_size <- (z_score ** 2) * p * (1 - p) / (0.01) ** 2
+round(sample_size)
+
+sample_size <- (z_score ** 2) * (0.25) / (0.01) ** 2
+round(sample_size)
+ 
+```
+
+# Data Analysis
+
+> Results of a laboratory analysis of calories and sodium content of major hot dog brands.
+Researchers for Consumer Reports analyzed three types of hot dog: beef, poultry, and meat (mostly pork
+and beef, but up to 15% poultry meat). Fifty four observations are reported.
+
+
+```{r data_hotdog}
+
+hotdogs <- loadDataFile("hot_dogs.csv")
+
+```
+
+## 1.)
+
+> Create boxplots and find 95% confidence intervals for the mean amount of calories in each Type of hot
+dog: beef, meat and poultry. Construct 99% one-sided lower confidence intervals for the mean amount
+of calories in each Type of hot dog: beef, meat and poultry.
+
+```{r data_1, echo=T}
+
+ggplot(hotdogs, aes(x = Type, y = Calories, group = Type)) +
+	geom_boxplot() +
+	labs(title = "Calories, by hotdog Type")
+
+beef <- hotdogs[Type == "Beef"]
+meat <- hotdogs[Type == "Meat"]
+poultry <- hotdogs[Type == "Poultry"]
+
+with(beef, t.test(Calories)$conf.int)
+with(meat, t.test(Calories)$conf.int)
+with(poultry, t.test(Calories)$conf.int)
+
+t.test(beef$Calories, alternative = "less", conf.int = 0.99)
+t.test(meat$Calories, alternative = "less", conf.int = 0.99)
+t.test(poultry$Calories, alternative = "less", conf.int = 0.99)
+
+```
+
+## 2.)
+
+> Find a 95% confidence interval for the variance in the amount of calories found for each type of hotdog:
+beef, meat and poultry.
+
+
+```{r data_2, echo=T}
+
+var.conf.int = function(x, conf.level = 0.95) {
+	df <- length(x) - 1
+	chilower <- qchisq((1 - conf.level) / 2, df, lower.tail = TRUE)
+	chiupper <- qchisq((1 - conf.level) / 2, df, lower.tail = FALSE)
+	v <- var(x)
+	c(df * v / chiupper, df * v / chilower)
+}
+
+pretty_vector(with(beef, var.conf.int(Calories)))
+pretty_vector(with(meat, var.conf.int(Calories)))
+pretty_vector(with(poultry, var.conf.int(Calories)))
+
+```

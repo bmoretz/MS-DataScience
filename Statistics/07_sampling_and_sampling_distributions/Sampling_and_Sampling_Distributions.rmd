@@ -1,0 +1,206 @@
+---
+title: "Lesson 07: Sampling and Sampling Distributions"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: spacelab
+    df_print: paged
+---
+
+```{r knitr-setup, include = FALSE}
+library(knitr)
+
+knitr::opts_chunk$set(eval = TRUE)
+
+opts_chunk$set(fig.align = "center", fig.height = 4, fig.width = 8) # for html
+opts_knit$set(progress = FALSE, verbose = TRUE)
+
+```
+
+
+```{r additional-libraries, echo=FALSE}
+
+library(data.table, quietly = TRUE, warn.conflicts = FALSE)
+
+assignInNamespace("cedta.pkgEvalsUserCode", c(data.table:::cedta.pkgEvalsUserCode, "rtvs"), "data.table")
+
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggthemes, quietly = TRUE, warn.conflicts = FALSE)
+library(gridExtra, quietly = TRUE, warn.conflicts = FALSE)
+
+theme_set(theme_fivethirtyeight())
+
+# Theme Overrides
+theme_update(plot.title = element_text(hjust = 0.5),
+			 plot.subtitle = element_text(hjust = 0.5),
+			 axis.text.x = element_text(size = 10),
+			 axis.text.y = element_text(size = 10),
+			 axis.title = element_text(face = "bold", size = 12, colour = "steelblue4"),
+			 legend.position = "top", legend.title = element_blank())
+
+```
+
+## 1.) Uniform Sampling
+
+Use the uniform distribution over the interval 0 to 1.
+
++ Draw 100 random samples of size 10. 
++ Calculate the means for each sample. 
++ Using the 100 mean values plot a histogram. 
++ Repeat with 100 random samples of size 50. 
++ Repeat with 100 samples of size 500. 
++ Present the three histograms using par().
+
+Calculate the variance of each histogram and compare to the original uniform distribution. What do
+you conclude?
+
+```{r ex_1, echo = T}
+
+unif_means <- function(n, s) { 
+	sapply(seq(from = 1, to = n, by = 1), FUN = function(x) {
+	    mean( runif(s, 0, 1) )
+	})
+}
+
+plot_means <- function(m, s) {
+	ggplot(data.table(X = m), mapping = aes(x = X, fill = ..count..)) +
+		geom_histogram(breaks = pretty(m)) +
+		labs(subtitle = sprintf("Sample Mean: %.6f, sample size = %.0f", mean(m), s)) +
+		theme()
+}
+
+s <- 10
+m10 <- unif_means(100, s)
+plot_means(m10, s)
+
+s <- 50 
+m50 <- unif_means(100, s)
+plot_means(m50, s)
+
+s <- 500
+
+m500 <- unif_means(100, s)
+plot_means(m500, s)
+
+```
+
+## 2.) Uniform to Normal
+
+> Using the histogram determined above for samples of size 50, find the quartiles. Using the normal
+distribution with the true mean and variance for a uniform distribution over the interval 0 to 1,
+determine the theoretical quartiles for a sample mean from 50 observations. Compare the two sets of
+quartiles. What do you conclude?
+
+```{r ex_2, echo = T}
+
+quantile(m50)
+
+get_true_means <- function(n, u, sd) {
+	sapply(seq(from = 1, to = n, by = 1),
+        FUN = function(x) {
+		    mean( rnorm( n, mean = u, sd))
+	    })
+}
+
+quantile(get_true_means(50, .5, sqrt(0.08333333)))
+
+```
+
+__Answer:__ 
+
+> The quantiles are very simlilar. Likely to continue converging as sample sizes increase.
+
+## 3.) Binomial Sampling
+
+> Use the binomial distribution with p = 0.5. Draw 100 random samples of size 10. Calculate the means
+for each sample. Using the 100 mean values plot a histogram. Repeat with 100 random samples of
+size 50. Repeat with 100 samples of size 500. Present the three histograms using par(). Calculate the
+variance of each histogram and compare to the original mean and variance for the binomial. What do
+you conclude?
+
+```{r ex_3, echo = T}
+
+binom_means <- function(n, s, p) {
+	sapply(seq(from = 1, to = n, by = 1), FUN = function(x) {
+		mean(rbinom(s, 1, p))
+	})
+}
+
+s <- 10
+bm10 <- binom_means(100, s, .5)
+plot_means(bm10, s)
+
+s <- 50
+bm50 <- binom_means(100, s, .5)
+plot_means(bm50, s)
+
+s <- 500
+bm500 <- binom_means(100, s, .5)
+plot_means(bm500, s)
+
+```
+
+## 4.) Binominal to Normal
+
+> Using the histogram determined above for samples of size 50, find the quartiles. Using the normal
+distribution with the true mean and variance for a binomial distribution with p = 0.5, determine the
+theoretical quartiles for a sample mean from 50 observations. Compare the two sets of quartiles. What
+do you conclude?
+
+```{r ex_4, echo = T}
+
+quantile(bm50)
+
+quantile(get_true_means(50, .5, sqrt(.25)))
+
+```
+
+__Answer:__ 
+
+> The quantiles are very simlilar. Likely to continue converging as sample sizes increase.
+
+## 5.) Right Skewed Binomial
+
+> Use the binomial distribution with p = 0.1. Draw 100 random samples of size 10. Calculate the means
+for each sample. Using the 100 mean values plot a histogram. Repeat with 100 random samples of
+size 50. Repeat with 100 samples of size 500. Present the three histograms using par(). Calculate the
+variance of each histogram and compare to the original mean and variance for the binomial. What do
+you conclude?
+
+```{r ex_5, echo = T}
+
+s <- 10
+lbm10 <- binom_means(100, s, .1)
+plot_means(lbm10, s)
+
+s <- 50
+lbm50 <- binom_means(100, s, .1)
+plot_means(lbm50, s)
+
+s <- 500
+lbm500 <- binom_means(100, s, .1)
+plot_means(lbm500, s)
+
+```
+
+## 6.) Right-Skewed Comparision
+
+> Using the histogram determined above for samples of size 50, find the quartiles. Using the normal
+distribution with the true mean and variance for a binomial distribution with p = 0.1, determine the
+theoretical quartiles for a sample mean from 50 observations. Compare the two sets of quartiles. What
+do you conclude?
+
+```{r ex_6, echo = T}
+
+quantile(lbm50)
+
+quantile(get_true_means(50, .1, sqrt(.09)))
+
+```
+
+__Answer:__ 
+
+> The quantiles are very simlilar. Likely to continue converging as sample sizes increase.

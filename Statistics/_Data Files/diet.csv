@@ -1,0 +1,5 @@
+DIET,OUTCOMECOUNT,
+Control,No Bloat,21
+Control,Bloat,3
+Test,No Bloat,11
+Test,Bloat,13

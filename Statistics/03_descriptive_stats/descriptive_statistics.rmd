@@ -1,0 +1,339 @@
+---
+title: "Lesson 03: Descriptive Statistics"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: spacelab
+    df_print: paged
+---
+
+```{r knitr-setup, include = FALSE}
+library(knitr)
+
+knitr::opts_chunk$set(eval = TRUE)
+
+opts_chunk$set(fig.align = "center", fig.height = 4, fig.width = 8) # for html
+opts_knit$set(progress = FALSE, verbose = TRUE)
+
+```
+
+
+```{r additional-libraries, echo=FALSE}
+
+library(data.table, quietly = TRUE, warn.conflicts = FALSE)
+
+assignInNamespace("cedta.pkgEvalsUserCode", c(data.table:::cedta.pkgEvalsUserCode, "rtvs"), "data.table")
+
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggthemes, quietly = TRUE, warn.conflicts = FALSE)
+library(gridExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(kableExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(GGally, quietly = TRUE, warn.conflicts = FALSE)
+library(knitr, quietly = TRUE, warn.conflicts = FALSE)
+library(RColorBrewer, quietly = TRUE, warn.conflicts = FALSE)
+library(moments, quietly = TRUE, warn.conflicts = FALSE)
+library(gplots, quietly = TRUE, warn.conflicts = FALSE)
+
+theme_set(theme_light())
+
+# Theme Overrides
+theme_update(plot.title = element_text(hjust = 0.5),
+			 axis.text.x = element_text(size = 10),
+			 axis.text.y = element_text(size = 10),
+			 axis.title = element_text(face = "bold", size = 12, colour = "steelblue4"),
+			 legend.position = "top", legend.title = element_blank())
+
+pretty_kable <- function(data, title, dig = 2) {
+	kable(data, caption = title, digits = dig, big.mark = "'") %>%
+		kable_styling(bootstrap_options = c("striped", "hover"))
+}
+
+pretty_vector <- function(vec, label = "") {
+	pander::pander(vec)
+}
+
+lp.w <- "E:/GitHub/R-Playground"
+lp.h <- "C:/Projects/R/Playground"
+
+if (file.exists(lp.w)) {
+	base.dir <- lp.w
+} else if (file.exists(lp.h)) {
+	base.dir <- lp.h
+}
+
+data.path <- paste0(base.dir, "/Classes/MSDS401/Exercises/_Data Files/")
+
+# simple replacement for read.csv that returns a data.table.
+loadDataFile <- function(file_name) {
+	data.raw <- fread(paste0(data.path, file_name),
+  header = TRUE, stringsAsFactors = FALSE, na.strings = c("NA", ""))
+
+	data <- setNames(data.raw, tools::toTitleCase(tolower(names(data.raw))))
+
+	return(data)
+}
+
+```
+
+
+```{r ex_3_util, echo = FALSE}
+
+getMode <- function(values) {
+	tbl.vals <- data.frame(table(values))
+	tbl.vals$values <- as.numeric(levels(tbl.vals$values))[tbl.vals$values]
+	mode <- tbl.vals[which.max(tbl.vals$Freq),]
+
+	names(mode)[1] <- "Value"
+
+	mode
+}
+
+getSummary <- function(values) {
+	mode <- getMode(values)
+
+	data.table(
+		Statistic = c("Mean",
+					"Median",
+					"Min",
+					"Max",
+                    "Range",
+					"Mode",
+					"ModeFreq",
+	                "StdDev",
+					"Variance",
+					"Q1",
+					"Q3",
+                    "P10"),
+
+	    Value = c(mean(values, na.rm = T),
+			  median(values, na.rm = T),
+			  min(values, na.rm = T),
+			  max(values, na.rm = T),
+              max(values, na.rm = T) - min(values, na.rm = T),
+			  ifelse(mode$Freq != 1, mode$Value, NA),
+			  ifelse(mode$Freq != 1, mode$Freq, NA),
+			  sd(values, na.rm = T),
+			  var(values, na.rm = T),
+			  quantile(values, probs = c(0.25), na.rm = T),
+              quantile(values, probs = c(0.75), na.rm = T),
+              quantile(values, probs = c(0.10), na.rm = T))
+	)
+}
+
+summary_cols <- c("Mean", "Median", "Range", "StdDev", "Variance", "Q1", "Q3", "P10")
+
+```
+
+## 1.) Cars
+
+> __Exercise 1__: mileage.csv is derived from a 1991 U.S EPA study of passenger car mileage. This file includes
+information on sixty cars: HP (engine horsepower), MPG (average miles per gallon) WT (vehicle weight in
+100 lb units) and CLASS (vehicle weight class C1,.,C6).
+
++ __Dataset__: _milage.csv_
+
+```{r ex_3_1.data, echo = FALSE}
+
+milage <- loadDataFile("mileage.csv")
+
+milage$Class <- factor(milage$Class, ordered = TRUE)
+
+glimpse(milage)
+
+```
+
+### 1.1) Millage Summary
+
+> For each weight class determine the mean and standard deviation of MPG. What can you conclude from these calculations?
+
+```{r ex_3_1.mpg_summary, echo = FALSE}
+
+mpg_by_class <- milage[, .(Avg = mean(Mpg), StdDev = sd(Mpg)), by = Class]
+
+print(mpg_by_class)
+
+```
+
+
+```{r ex_3_1.gg, echo = FALSE}
+
+ggplot(milage, aes(x = Class, y = Mpg)) +
+	geom_boxplot() +
+	labs(title = "MPG By Class")
+
+```
+
+> __Answer__: There is a strong inverse correlation to MPG by weight class. This is an intuitive result, as one would expect the more a car weights, the less fuel efficient it is.
+There are minimal outliers in this data set, so we should have high relatively confidence in these results.\
+
+### 1.2) Horsepower Summary
+> For each weight class determine the mean and standard deviation of HP. What can you conclude from these calculations?
+
+```{r ex_3_2.hp_summary, echo = FALSE}
+
+hp_by_class <- milage[, .(Avg = mean(Hp), StdDev = sd(Hp)), by = Class]
+
+print(hp_by_class)
+
+```
+
+
+```{r ex_3_2.gg, echo = FALSE}
+
+ggplot(milage, aes(x = Class, y = Hp)) +
+	geom_boxplot() +
+	labs(title = "Hoursepower By Class")
+
+```
+
+> __Answer__: There is a strong correlation from Horsepower to Weight Class. This makes intuitive sense as one would expect higher displacement engines, 
+which typically have more horsepower, are housed in larger vehicles. This would of course not always be true, as race cars and specialty vehicles would be outliers
+in this data set. We also see many outliers in the C5 class, which suggest this could fit the profile of such a race car or special purpose vehicle.
+
+## 2.) Shoppers
+
+> __Exercise 2:__: shoppers.csv contains the dollar amounts spent in a store by individual shoppers during one
+day.
+
+```{r ex_3_2_data, echo = FALSE}
+
+shoppers <- loadDataFile("shoppers.csv")
+
+glimpse(shoppers)
+
+```
+
+> Find the mean, median, range, standard deviation, variance, Q1, Q3 and P10. Plot the histogram and
+describe the distribution.
+
+
+```{r ex_3_2_summary, echo = FALSE}
+
+shoppers.summary <- getSummary(shoppers$Spending)
+
+print(shoppers.summary[which(Statistic %in% summary_cols)])
+
+```
+
+
+```{r ex_3_2_vis, echo = FALSE}
+
+ggplot(shoppers, aes(Spending, fill = ..count..)) +
+	geom_histogram(breaks = pretty(shoppers$Spending)) +
+	labs(title = "Shopping Distribution")
+
+```
+
+> __Answer__: The shopping distribution is heavily right-skewed, showing that most transactions were on the lower end,
+with a few big spenders sloping downward pretty linearly after around ~$20 (Assuming USD).
+
+## 3.) POTUS
+
+> __Exercise 3:__ pontus.csv lists the ages of USA Presidents at the time of their inauguration. Also listed are
+the heights of the Presidents and their opponents.
+
+### 3.1) Summary
+
+> Find the mean, median, range, standard deviation, Q1, Q3 and P10 of the Presidents’ ages.
+
+```{r ex_3_3_data, echo = FALSE}
+
+presidents <- loadDataFile("pontus.csv")
+
+presidents.age.summary <- getSummary(presidents$Age)
+
+print(presidents.age.summary[which(Statistic %in% summary_cols)])
+
+```
+
+### 3.2) Opponents
+
+> Find the mean, median, range, standard deviation, Q1, Q3 and P10 of the heights of the Presidents
+and also their opponents.
+
+
+```{r ex_3_3_summary, echo = FALSE}
+
+lapply(apply(presidents[, .(Ht, Htopp)], 2, FUN = getSummary),
+    function(x) x[which(Statistic %in% summary_cols)])
+
+```
+
+### 3.3) Height Comparison
+
+> Calculate the difference between each President’s height and that of his opponent. Plot a histogram
+of these differences. Construct a boxplot. What do you conclude from your calculations? Why is the
+difference of average heights calculated in (2) different from the average of the pairwise differences
+calculated in (3)?
+
+```{r ex_3_3_vs_hist, echo = FALSE}
+
+presidents[, Diff := Ht - Htopp]
+
+presidents.complete = presidents[complete.cases(presidents)]
+
+ggplot(presidents.complete, aes(Diff, fill = ..count..)) +
+    geom_histogram( breaks = pretty(presidents$Diff))
+
+```
+
+```{r ex_3_3_vs_box, echo = FALSE}
+
+ggplot(presidents.complete) +
+	geom_boxplot(aes("President", Ht)) +
+	geom_boxplot(aes("Opponent", Htopp))
+
+```
+
+
+> __Answer__: If you only include the complete cases (excluding any NAs), then 2 and 3 are similar in that the mean difference is 0, and the majory of the
+differences are between 180 - 170 [0-10].
+
+## 4.) Old Faithful
+
+> __Exercise 4:__ geyser.csv contains the intervals (in minutes) between eruptions of Old Faithful Geyser in
+Yellowstone National Park. The data were taken on two consecutive weeks: WEEK1 and WEEK2.
+
+> Compare the two sets of data using summary(), hist() and boxplot(). 
+
+
+```{r ex_3_4_data, echo = FALSE}
+
+geyser <- loadDataFile("geyser.csv")
+
+geyser_pivot <- melt(geyser, measure.vars = c("Week1", "Week2"))
+colnames(geyser_pivot) <- c("Week", "Minutes")
+
+```
+
+
+```{r ex_3_4_summary, echo = FALSE}
+
+summary(geyser)
+
+```
+
+
+```{r ex_3_4_hist, echo = FALSE}
+
+ggplot(geyser_pivot, aes(Minutes, fill = ..count..)) +
+	geom_histogram(breaks = pretty(geyser_pivot$Minutes)) +
+	facet_wrap(~Week)
+
+```
+
+
+```{r ex_3_4_vis, echo = FALSE}
+
+ggplot(geyser_pivot, aes(Week, Minutes)) +
+	geom_boxplot()
+
+```
+
+> What do you conclude?
+
+> __Answer:__ The two datasets are similar enough in terms of range and measures of center. Week 1 has some upper bound outliers and seemed to be
+more 'volatile' overall, while week 2 has more central tendency.

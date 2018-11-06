@@ -1,0 +1,196 @@
+---
+title: "Lesson 09: Statistical Inference Hypothesis Testing for Single Populations"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: spacelab
+    df_print: paged
+---
+
+```{r knitr-setup, include = FALSE}
+library(knitr)
+
+knitr::opts_chunk$set(eval = TRUE)
+
+opts_chunk$set(fig.align = "center", fig.height = 4, fig.width = 8) # for html
+opts_knit$set(progress = FALSE, verbose = TRUE)
+
+```
+
+
+```{r additional-libraries, echo=FALSE}
+
+library(data.table, quietly = TRUE, warn.conflicts = FALSE)
+
+assignInNamespace("cedta.pkgEvalsUserCode", c(data.table:::cedta.pkgEvalsUserCode, "rtvs"), "data.table")
+
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggthemes, quietly = TRUE, warn.conflicts = FALSE)
+library(gridExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(kableExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(GGally, quietly = TRUE, warn.conflicts = FALSE)
+library(knitr, quietly = TRUE, warn.conflicts = FALSE)
+library(RColorBrewer, quietly = TRUE, warn.conflicts = FALSE)
+library(moments, quietly = TRUE, warn.conflicts = FALSE)
+library(gplots, quietly = TRUE, warn.conflicts = FALSE)
+
+theme_set(theme_light())
+
+# Theme Overrides
+theme_update(plot.title = element_text(hjust = 0.5),
+			 axis.text.x = element_text(size = 10),
+			 axis.text.y = element_text(size = 10),
+			 axis.title = element_text(face = "bold", size = 12, colour = "steelblue4"),
+			 legend.position = "top", legend.title = element_blank())
+
+pretty_kable <- function(data, title, dig = 2) {
+	kable(data, caption = title, digits = dig, big.mark = "'") %>%
+		kable_styling(bootstrap_options = c("striped", "hover"))
+}
+
+pretty_vector <- function(vec, label = "") {
+	pander::pander(vec)
+}
+
+lp.w <- "E:/GitHub/R-Playground"
+lp.h <- "C:/Projects/R/Playground"
+
+if (file.exists(lp.w)) {
+	base.dir <- lp.w
+} else if (file.exists(lp.h)) {
+	base.dir <- lp.h
+}
+
+data.path <- paste0(base.dir, "/Classes/MSDS401/Exercises/_Data Files/")
+
+# simple replacement for read.csv that returns a data.table.
+loadDataFile <- function(file_name) {
+	data.raw <- fread(paste0(data.path, file_name),
+  header = TRUE, stringsAsFactors = FALSE, na.strings = c("NA", ""))
+
+	data <- setNames(data.raw, tools::toTitleCase(tolower(names(data.raw))))
+
+	return(data)
+}
+
+```
+
+## Simple Regression Analysis and Correlation
+
+```{r data_tableware}
+
+newspapers <- loadDataFile("newspapers.csv")
+
+pretty_str <- data.table(Variable = names(newspapers),
+	Classes = sapply(newspapers, typeof),
+	Glimpse = sapply(newspapers, function(x) paste0(head(x), collapse = ", ")))
+
+pretty_kable(pretty_str, "Newspapers Raw Data")
+
+```
+
+### 1.) Sunday vs Daily
+
+Plot Sunday circulation versus Daily circulation. Does the scatter plot suggest a linear relationship
+between the two variables? Calculate the Pearson Product Moment Correlation Coefficient between
+Sunday and Daily circulation.
+
+```{r}
+
+ggplot(newspapers, aes(x = Daily, y = Sunday)) +
+	geom_point() +
+    geom_smooth(method = lm, se = T ) +
+    labs( title = "Sunday vs. Daily")
+
+with(newspapers, pretty_vector(c(Correlation = cor(Daily, Sunday))))
+
+```
+
+### 2.) Regression Line
+
+Fit a regression line with Sunday circulation as the dependent variable. Plot the regression line with
+the circulation data. (Use Lander pages 212 and 213 for reference.) Comment on the quality of the fit.
+What percent of the total variation in Sunday circulation is accounted for by the regression line?
+
+
+```{r}
+
+lm.fit <- lm(Sunday ~ Daily, newspapers)
+
+lm.sum <- summary(lm.fit)
+
+ggplot(newspapers, aes(x = Daily, y = Sunday)) +
+	geom_point() +
+	stat_smooth(method = "lm")
+
+par(mfrow = c(2, 2))
+plot(lm.fit)
+par(mfrow = c(1, 1))
+
+```
+
+### 3.) Confidence
+
+Obtain 95% confidence intervals for the coefficients in the regression model. Use confint().
+
+
+```{r}
+
+confint(lm.fit, level = 0.95)
+
+pretty_kable( predict(lm.fit, interval = "prediction", level = 0.95), "Prediction Intervals" )
+
+Daily <- 500
+Sunday <- NA
+new.frame <- data.frame(Daily, Sunday)
+
+pretty_vector( predict(lm.fit, newdata = new.frame, interval = "prediction", level = 0.95) )
+
+```
+
+### 4.)
+
+Determine a 95% prediction interval to predict Sunday circulation for all available values of Daily
+circulation. Use predict(model, interval=“prediction”, level=0.95). Then, define a new data frame
+using Daily = 500 and Sunday = NA. Predict an interval for Sunday circulation.
+
+
+```{r}
+
+```
+
+### 5.)
+
+Use the tableware.csv data. Regress PRICE as a dependent variable against TIME. Comment on the
+quality of the fit. Is a simple linear regression model adequate or is something more needed?
+
+
+```{r}
+
+```
+
+### 6.)
+
+Use the tableware.csv data. ANOVA can be accomplished using a regression model. Regress PRICE
+against the variables BOWL, CASS, DISH and TRAY as they are presented in the data file. What do
+the coefficients represent in this regression model? How is the effect of plate accounted for?
+
+
+```{r}
+
+```
+
+### 7.)
+
+Use the tableware.csv data. Plot PRICE versus DIAM and calculate the Pearson product moment
+correlation coefficient. Include DIAM in the regression model in (6). Compare results between the two
+models. DIAM is referred to as a covariate. Does its inclusion improve upon the fit of the first model
+without DIAM?
+
+```{r}
+
+```
+

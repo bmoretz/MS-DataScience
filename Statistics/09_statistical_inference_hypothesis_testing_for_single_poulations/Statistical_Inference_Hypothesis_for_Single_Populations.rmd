@@ -1,0 +1,248 @@
+---
+title: "Lesson 09: Statistical Inference Hypothesis Testing for Single Populations"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: spacelab
+    df_print: paged
+---
+
+```{r knitr-setup, include = FALSE}
+library(knitr)
+
+knitr::opts_chunk$set(eval = TRUE)
+
+opts_chunk$set(fig.align = "center", fig.height = 4, fig.width = 8) # for html
+opts_knit$set(progress = FALSE, verbose = TRUE)
+
+```
+
+
+```{r additional-libraries, echo=FALSE}
+
+library(data.table, quietly = TRUE, warn.conflicts = FALSE)
+
+assignInNamespace("cedta.pkgEvalsUserCode", c(data.table:::cedta.pkgEvalsUserCode, "rtvs"), "data.table")
+
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggthemes, quietly = TRUE, warn.conflicts = FALSE)
+library(gridExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(kableExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(GGally, quietly = TRUE, warn.conflicts = FALSE)
+library(knitr, quietly = TRUE, warn.conflicts = FALSE)
+library(RColorBrewer, quietly = TRUE, warn.conflicts = FALSE)
+library(moments, quietly = TRUE, warn.conflicts = FALSE)
+library(gplots, quietly = TRUE, warn.conflicts = FALSE)
+
+theme_set(theme_light())
+
+# Theme Overrides
+theme_update(plot.title = element_text(hjust = 0.5),
+       axis.text.x = element_text(size = 10),
+       axis.text.y = element_text(size = 10),
+       axis.title = element_text(face = "bold", size = 12, colour = "steelblue4"),
+       legend.position = "top", legend.title = element_blank())
+
+pretty_kable <- function(data, title, dig = 2) {
+  kable(data, caption = title, digits = dig, big.mark = "'") %>%
+    kable_styling(bootstrap_options = c("striped", "hover"))
+}
+
+pretty_vector <- function(vec, label = "") {
+  pander::pander(vec)
+}
+
+lp.w <- "E:/GitHub/R-Playground"
+lp.h <- "C:/Projects/R/Playground"
+
+if (file.exists(lp.w)) {
+  base.dir <- lp.w
+} else if (file.exists(lp.h)) {
+  base.dir <- lp.h
+}
+
+data.path <- paste0(base.dir, "/Classes/MSDS401/Exercises/_Data Files/")
+
+# simple replacement for read.csv that returns a data.table.
+loadDataFile <- function(file_name) {
+  data.raw <- fread(paste0(data.path, file_name),
+  header = TRUE, stringsAsFactors = FALSE, na.strings = c("NA", ""))
+
+  data <- setNames(data.raw, tools::toTitleCase(tolower(names(data.raw))))
+
+  return(data)
+}
+
+```
+
+
+```{r data_load, include = F}
+
+hotdogs <- loadDataFile("hot_dogs.csv")
+
+```
+
+# Questions
+
+Variable Names:
++ 1. Type = Type of hotdog (beef, meat, or poultry)
++ 2. Calories = Calories per hot dog
++ 3. Sodium = Milligrams of sodium per hot dog
+
+## 1.) Hotdog Calories Mean
+
+Use hot_dogs.csv data and hypothesis tests to determine which type of hot dog has average calories
+less than 140 with 95% confidence. Present boxplots of calories by type of hot dog.
+
+```{r question1}
+
+test.mu <- 140
+
+ggplot(hotdogs, aes(x = Type, y = Calories)) +
+	geom_boxplot() +
+    geom_abline( slope = 0, intercept = test.mu, lwd = 1, color = "firebrick3", linetype = 11) +
+	labs(title = "Hotdog Calories, by Type")
+
+test.cal <- hotdogs[, .(Calories, Type)][, lapply(.SD, FUN = function(x) {
+  t.test(Calories, mu = test.mu, alternative = "less")$conf.int[2] < test.mu
+}), by = list(Type)]
+
+pretty_kable(test.cal, title = "T-test for Calories < 140, by type")
+
+```
+
+## 2.) Hotdog Sodium Mean
+
+Using hot_dogs.csv data and hypothesis tests at the 95% confidence level, determine which type of hot
+dog has an average Sodium level different from 425 milligrams.
+
+```{r question2}
+
+test.mu <- 425
+
+ggplot(hotdogs, aes(x = Type, y = Sodium)) +
+   geom_boxplot() +
+    geom_abline(slope = 0, intercept = test.mu, lwd = 1, color = "firebrick3", linetype = 11) +
+    labs(title = "Hotdog Calories, by Type")
+
+test.cal <- hotdogs[, .(Sodium, Type)][, lapply(.SD, FUN = function(x) {
+  t.test(Sodium, mu = test.mu, alternative = "two.sided", var.equal = T)$conf.int[2] < test.mu
+}), by = list(Type)]
+
+pretty_kable(test.cal, title = "T-test for Sodium == 425, by type")
+
+```
+
+## 3.) Hotdog Sodium Variance
+
+Using hot_dogs.csv data and hypothesis tests, determine if the variance in Sodium values for beef hot
+dogs is different from 6000 with 95% confidence.
+
+```{r question3}
+
+var.conf.int = function(x, conf.level = 0.95) {
+  df <- length(x) - 1
+  chilower <- qchisq((1 - conf.level) / 2, df, lower.tail = TRUE)
+  chiupper <- qchisq((1 - conf.level) / 2, df, lower.tail = FALSE)
+  v <- var(x)
+  data.frame( Lower = df * v / chiupper, Upper = df * v / chilower)
+}
+
+sodium.var <- hotdogs[, .(Sodium, Type)][, sapply(.SD, var.conf.int), by = Type][,
+   .(Type, Lower = V1, Upper = V2)]
+
+sodium.var[ Type == "beef" & (6000 < Lower) || (6000 > Upper)]
+
+```
+
+## 4.) Mean Hypothesis Test
+
+Assume a random sample of size 100 is drawn from a normal distribution for which the mean and
+variance are unknown. Assume the sample mean is 50 and the standard deviation of the sample is 2.
+Test the hypothesis that the true mean is 56, and also test the hypothesis the true mean is 40. Report
+p-values and comment on the results.
+
+```{r question4}
+
+# http://www.r-tutor.com/elementary-statistics/hypothesis-testing/two-tailed-test-population-mean-unknown-variance
+
+samp.mean <- 50 # sample mean
+test.mean1 <- 56 # mean value to test
+test.mean2 <- 40 # alternate mean value to test
+samp.sd <- 2 # sample standard deviation
+
+n <- 100 # sample size
+t <- (samp.mean - test.mean1) / (samp.sd / sqrt(n)) # test statistic
+t #[1] -30
+
+## [1] -30
+p.value <- 2 * pt(-abs(t), df = n - 1) # we use -abs(t) because pt()
+
+p.value # [1] 1.70085e-51
+
+t <- (samp.mean - test.mean2) / (samp.sd / sqrt(n)) # test statistic
+t 
+
+p.value <- 2 * pt(-abs(t), df = n - 1)
+p.value # [1] 4.595366e-72
+
+```
+
+## 5.) Coin Flips
+
+A coin is flipped 100 times. If it is unbiased the probability of a heads should equal the probability of a
+tails. At the 95% confidence level, test the null hypothesis the coin is unbiased versus the alternative
+that it is biased if 43 heads are obtained. Test the same hypothesis if 63 heads are obtained. Use
+one-sided hypothesis tests.
+
+```{r question5}
+
+# Looks like another binomial problem. Refer to R documentation for prop.test().
+# prop.test(x, n, p = NULL,
+# alternative = c("two.sided", "less", "greater"),
+# conf.level = 0.95, correct = TRUE)
+# x: a vector of counts of successes, a one-dimensional table with two entries, or a two-dimensional
+# table (or matrix) with 2 columns, giving the counts of successes and failures, respectively.
+# n: a vector of counts of trials; ignored if x is a matrix or a table.
+# p: a vector of probabilities of success. The length of p must be the same as the number of groups
+# specified by x, and its elements must be greater than 0 and less than 1.
+# alternative: character string specifying the alternative hypothesis,
+# must be one of "two.sided" (default), "greater" or "less". You can specify just the initial letter.
+# conf.level: confidence level of the returned confidence interval.
+# Must be a single number between 0 and 1.
+# Only used when testing the null that a single proportion equals a given value, or that two proportions
+# are equal; ignored otherwise.
+# correct: a logical indicating whether Yates' continuity correction should be applied where possible.
+
+prop.test(x = 43, n = 100, alternative = "less")
+
+prop.test(x = 63, n = 100, alternative = "greater")
+
+```
+
+## 6.) Salaries
+
+salaries.csv contains data derived from a November 8, 1993 article in Forbes titled “America’s Best
+Small Companies”. The file gives the CEO age and salary for 60 small business firms. Use these data to
+test the hypothesis at 95% confidence that at least 50% of the CEOs are 45 years old or older. Also
+test the hypothesis at 95% confidence that at least 50% of the CEOs earn less than $500,000 per year.
+Use one-sided hypothesis tests.
+
+```{r question6}
+
+salaries <- loadDataFile("salaries.csv")
+
+age <- salaries$Age >= 45
+count <- sum(age)
+total <- length(age)
+prop.test(x = count, n = total, alternative = "greater")
+
+salary <- salaries$Sal < 500
+count <- sum(salary)
+total <- length(salary)
+prop.test(x = count, n = total, alternative = "greater")
+
+```

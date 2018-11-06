@@ -1,0 +1,182 @@
+---
+title: "Home Sales Analysis"
+output: html_document
+---
+
+Source Data: <b>home_sales.csv</b>
+
+```{r additional-libraries, echo=FALSE}
+
+library(data.table, quietly = TRUE, warn.conflicts = FALSE)
+
+assignInNamespace("cedta.pkgEvalsUserCode", c(data.table:::cedta.pkgEvalsUserCode, "rtvs"), "data.table")
+
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggthemes, quietly = TRUE, warn.conflicts = FALSE)
+library(gridExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(kableExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(GGally, quietly = TRUE, warn.conflicts = FALSE)
+library(knitr, quietly = TRUE, warn.conflicts = FALSE)
+library(RColorBrewer, quietly = TRUE, warn.conflicts = FALSE)
+library(moments, quietly = TRUE, warn.conflicts = FALSE)
+library(gplots, quietly = TRUE, warn.conflicts = FALSE)
+
+theme_set(theme_light())
+
+# Theme Overrides
+theme_update(plot.title = element_text(hjust = 0.5),
+			 axis.text.x = element_text(size = 10),
+			 axis.text.y = element_text(size = 10),
+			 axis.title = element_text(face = "bold", size = 12, colour = "steelblue4"),
+			 legend.position = "top", legend.title = element_blank())
+
+pretty_kable <- function(data, title, dig = 2) {
+	kable(data, caption = title, digits = dig, big.mark = "'") %>%
+		kable_styling(bootstrap_options = c("striped", "hover"))
+}
+
+pretty_vector <- function(vec, label = "") {
+	pander::pander(vec)
+}
+
+lp.w <- "E:/GitHub/R-Playground"
+lp.h <- "C:/Projects/R/Playground"
+
+if (file.exists(lp.w)) {
+	base.dir <- lp.w
+} else if (file.exists(lp.h)) {
+	base.dir <- lp.h
+}
+
+data.path <- paste0(base.dir, "/Classes/MSDS401/Exercises/_Data Files/")
+
+# simple replacement for read.csv that returns a data.table.
+loadDataFile <- function(file_name) {
+	data.raw <- fread(paste0(data.path, file_name),
+  header = TRUE, stringsAsFactors = FALSE, na.strings = c("NA", ""))
+
+	data <- setNames(data.raw, tools::toTitleCase(tolower(names(data.raw))))
+
+	return(data)
+}
+
+home.sales <- loadDataFile("home_prices.csv")
+str(home.sales)
+
+```
+
+<b>a.)</b> <i>What are the measurement levels of each of the eight variables ?</i>
+
+```{r}
+
+variable_types = data.frame(
+      Variable = colnames(home.sales),
+      Type = c("Ratio",
+                "Ratio",
+                "Ordinal",
+                "Ordinal",
+                "Ratio",
+                "Nominal",
+                "Nominal",
+                "Ratio"))
+
+print(variable_types)
+
+```
+
+<b>b.)</b> <i>Should any variable have its values changed to better reflect its true nature ?</i>
+
+```{r}
+
+home.sales$Year <- as.Date(paste(home.sales$Year, 12, 31, sep = "-"))
+home.sales$Baths <- factor(home.sales$Baths, ordered = TRUE)
+home.sales$Feats <- factor(home.sales$Feats, ordered = TRUE)
+home.sales$NBR <- home.sales$NBR == "YES"
+home.sales$Corner <- home.sales$Corner == "YES"
+
+str(home.sales)
+
+```
+
+<b>c.)</b> <i>From the vector “price”, select a simple random sample of size 12. Assign the sample to the name “SRS.”"</i>
+
+```{r}
+
+set.seed(9999)
+SRS <- sample(home.sales$Price, 12)
+
+print(SRS)
+
+mu_SRS <- mean(SRS)
+print(mu_SRS)
+
+```
+
+<i>Print SRS and determine the mean value.</i>
+
+```{r}
+
+mu_SRS <- mean(SRS)
+
+print(paste('Sample mean: ', round(mu_SRS,2)))
+
+```
+
+<b>d.)</b> <i>From the vector “price”, select a systematic sample of twelve observations. Start with the seventh
+observation and pick every 10th observation thereafter (i.e. 7, 17, 27,). You should end with the 117th
+observation. Assign the sample vector to “SS.”" Print the values of SS and compute the mean value.</i>
+
+```{r}
+
+obs <- seq(from = 7, to = 117, by = 10)
+print("Systematic Sample: ")
+print(obs)
+
+SS <- home.sales[obs,]$Price
+
+print(SS)
+
+mu_SS <- mean(SS)
+print(paste("SS Mean: ", round(mu_SS,2)))
+
+```
+
+e) Examine the printed values and mean values obtained from the two sampling procedures. Do you see a
+difference? Try the commands summary(SRS) and summary(SS).
+
+```{r}
+
+print('SRS Summary')
+summary(SRS)
+
+print('SS Summary')
+summary(SS)
+
+```
+
+<b>f.)</b> <i>Create histograms and stem-and-leaf plots for SRS and SS using hist() and stem().</i>
+
+```{r, echo=FALSE}
+
+stem(SRS)
+
+pSRS <- qplot(SRS,
+      geom = "histogram",
+      bins = 5,
+      main = "Histogram for Random Sample Price",
+      xlab = "Price")
+
+stem(SS)
+
+pSS <- qplot(SS,
+      geom = "histogram",
+      bins = 5,
+      main = "Histogram for Systematic Sample Price",
+      xlab = "Price")
+
+grid.arrange(pSRS, pSS, nrow = 1)
+
+```
+
+How do the two samples compare?

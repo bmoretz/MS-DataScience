@@ -1,0 +1,293 @@
+---
+title: "Lesson 05: Discrete Distributions"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: spacelab
+    df_print: paged
+---
+
+```{r knitr-setup, include = FALSE}
+library(knitr)
+
+knitr::opts_chunk$set(eval = TRUE)
+
+opts_chunk$set(fig.align = "center", fig.height = 4, fig.width = 8) # for html
+opts_knit$set(progress = FALSE, verbose = TRUE)
+
+```
+
+
+```{r additional-libraries, echo=FALSE}
+
+library(data.table, quietly = TRUE, warn.conflicts = FALSE)
+
+assignInNamespace("cedta.pkgEvalsUserCode", c(data.table:::cedta.pkgEvalsUserCode, "rtvs"), "data.table")
+
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggthemes, quietly = TRUE, warn.conflicts = FALSE)
+library(gridExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(kableExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(GGally, quietly = TRUE, warn.conflicts = FALSE)
+library(knitr, quietly = TRUE, warn.conflicts = FALSE)
+library(RColorBrewer, quietly = TRUE, warn.conflicts = FALSE)
+library(moments, quietly = TRUE, warn.conflicts = FALSE)
+library(gplots, quietly = TRUE, warn.conflicts = FALSE)
+
+theme_set(theme_light())
+
+# Theme Overrides
+theme_update(plot.title = element_text(hjust = 0.5),
+			 axis.text.x = element_text(size = 10),
+			 axis.text.y = element_text(size = 10),
+			 axis.title = element_text(face = "bold", size = 12, colour = "steelblue4"),
+			 legend.position = "top", legend.title = element_blank())
+
+pretty_kable <- function(data, title, dig = 2) {
+	kable(data, caption = title, digits = dig, big.mark = "'") %>%
+		kable_styling(bootstrap_options = c("striped", "hover"))
+}
+
+pretty_vector <- function(vec, label = "") {
+	pander::pander(vec)
+}
+
+lp.w <- "E:/GitHub/R-Playground"
+lp.h <- "C:/Projects/R/Playground"
+
+if (file.exists(lp.w)) {
+	base.dir <- lp.w
+} else if (file.exists(lp.h)) {
+	base.dir <- lp.h
+}
+
+data.path <- paste0(base.dir, "/Classes/MSDS401/Exercises/_Data Files/")
+
+# simple replacement for read.csv that returns a data.table.
+loadDataFile <- function(file_name) {
+	data.raw <- fread(paste0(data.path, file_name),
+  header = TRUE, stringsAsFactors = FALSE, na.strings = c("NA", ""))
+
+	data <- setNames(data.raw, tools::toTitleCase(tolower(names(data.raw))))
+
+	return(data)
+}
+
+```
+
+
+```{r ex_3_util, echo = FALSE}
+
+```
+
+## 1.) Races
+
+Suppose a gambler goes to the race track to bet on four races. There are six horses in each race. He
+picks one at random out of each race and bets on each of the four selections. Assuming a binomial
+distribution, answer the following questions.
+
+
+```{r ex_1_vis}
+
+races <- 0:4
+race_probs <- dbinom(races, size = 4, prob = 1/6 )
+
+stopifnot(sum(race_probs) == 1)
+
+plot(races, race_probs, type = "h", lwd = 3, col = "blue",
+  main = paste("Probability of picking a Winner Randomly"), xlab = "Wins", ylab = "Probability")
+abline(h = 0, col = "green2")
+
+```
+
+### a.)
+
+> The gambler wins all four races.
+
+```{r ex_1_a, echo = T}
+
+q1a <- dbinom(4, size = 4, prob = 1 / 6)
+sprintf("%.4f", q1a)
+
+```
+
+### b.)
+
+> The gambler loses all four races.
+
+```{r ex_1_b, echo = T}
+
+q1b <- dbinom(0, size = 4, prob = 1 / 6)
+sprintf("%.4f", q1b)
+
+```
+
+### c.)
+
+> The gambler wins exactly one race.
+
+```{r ex_1_c, echo = T}
+
+q1c <- dbinom(1, size = 4, prob = 1 / 6)
+sprintf("%.4f", q1c)
+
+```
+
+### d.)
+
+> The gambler wins at least one race.
+
+```{r ex_1_d, echo = T}
+
+q1d <- 1 - q1b
+sprintf("%.4f", q1d)
+
+```
+
+## 2.) Tea Tasting
+
+A woman claims she can tell by taste if cream is added before a tea bag is placed in a tea cup containing
+hot water. An experiment is designed. A series of cups of tea will be prepared with n of them having
+the cream added prior to the tea bag and n of them with the cream added after the tea bag. This gives
+a total of 2n cups of tea. The sequence of tea cups is presented in random order. If the woman cannot
+discriminate it will be expected on average she would guess at random and be correct on half the tea
+cups. Answer the following questions assuming the number of successes follows a binomial distribution
+with probability equal to 0.5 and 2n total binomial trials.
+
+```{r ex_2_vis}
+
+n <- 5
+cups <- 1:20
+
+taste_probs <- dbinom(cups, size = length(cups), prob = 1/2 )
+
+stopifnot(round(sum(taste_probs)) == 1)
+
+plot(cups, taste_probs, type = "h", lwd = 3, col = "blue",
+  main = "Probability of detecting cream", xlab = "Tea Tastes", ylab = "Probability")
+abline(h = 0, col = "green2")
+
+```
+
+> If the total number of binomial trials is 2n = 20, what is the probability the woman is correct
+more than 15 out of 20 times?
+
+```{r ex_2_a, echo = T}
+
+q2_prob <- sum(tail(taste_probs, 5))
+
+q2_alt_prob <- pbinom(q = 15, size = 20, prob = 0.5, lower.tail = FALSE)
+
+stopifnot( round(q2_prob,8) == round(q2_alt_prob,8) )
+
+sprintf("%.4f", q2_prob)
+
+```
+
+### b.)
+
+> To reduce the amount of labor, how small can the total number of binomial trials be while
+keeping the probability of 2n consecutive successes at or below 0.05? (We use 2n = the
+number of trials since half have the cream before and half after the tea bag.)
+
+```{r ex_2_b, echo = T}
+
+# Here we can use a while-loop to find the desired value of n = 2m.
+# We continue to have half of the cups with cream first (binomial p = 0.5),
+# but now we are looking for a distribution function value in the upper tail
+# at or below 0.05. This is the value we get from the pbinom() function.
+
+target_p_value <- 0.05 # we will stop looking when we meet this target or go under
+# later in the course we will call this a critical value in hypothesis testing
+current_p_value <- 1.00 # initialze for search
+
+n <- 0 # initialize number of cups... we will increase by 2 in each iteration
+while (current_p_value > target_p_value) {
+	n <- n + 2 # increase by one for this iteration
+	# we are talking about consecutive hits greater than or equal to n - 1
+	current_p_value <- pbinom(q = n - 1, size = n, prob = 0.5, lower.tail = FALSE)
+	# print out intermediate results for each iteration
+	cat("\n Number of Consecutive Cups Correctly Identified:", n, "p_value: ",
+	sprintf("%.4f", current_p_value))
+}
+
+cat("\n\nLady Tasting Tea Solution: ", n, "Consecutive Cups Correctly Labeled",
+    "\n p-value: ", sprintf("%.4f", current_p_value), "<= 0.05 critical value")
+
+```
+
+## 3.) ER Visits
+
+An emergency room has 4.6 serious accidents to handle on average each night. 
+
+> Using the Poisson distribution, calculate the distribution of accidents per night. 
+
+_(In other words, what is the probability of 0, 1, 2, . accidents per night?)_ __Plot the result.__
+
+```{r ex_3, echo = T}
+
+u <- 4.6
+incidents <- 1:15
+
+probs <- dpois( incidents, u )
+
+stopifnot(round(sum(probs)) == 1)
+
+plot(incidents, probs, type = "h", lwd = 3, col = "blue",
+  main = "Emergency Room Incidents", xlab = "Incidents", ylab = "Probability")
+abline(h = 0, col = "green2")
+curve(dnorm(x, u, sqrt(u)), lwd = 2, col = "red", add = T)
+
+```
+
+## 4.) Production Defects
+
+A production process occasionally produces at random a defective product at a rate of 0.001. If these
+products are packaged 100 at a time in a box and sold, answer the following questions and compare
+your answers.
+
+> Plot the distributions for each type of variable over the range 0, 1, 2, 3, 4. What do you
+conclude?
+
+> Using the binomial distribution, calculate the probability a box has zero defectives.
+
+```{r}
+
+vals <- 0:10
+defect_rate <- 0.001
+box_size <- 100
+
+```
+
+```{r ex_4_a, echo = T}
+
+binom_prob <- dbinom(vals, size = box_size, prob = defect_rate)
+
+stopifnot(round(sum(binom_prob)) == 1)
+
+plot(vals, binom_prob, type = "h", lwd = 3, col = "blue",
+  main = "Defect Rate per Box (100 ct)", xlab = "Incidents", ylab = "Probability")
+abline(h = 0, col = "green2")
+
+round( dbinom(0, size = box_size, prob = defect_rate), 3 )
+
+```
+
+> Using the Poisson distribution, calculate the probability a box has zero defectives.
+
+```{r ex_4_b, echo = T}
+
+pois_prob <- dpois(vals, lambda = defect_rate * box_size )
+
+stopifnot(round(sum(pois_prob)) == 1)
+
+plot(vals, pois_prob, type = "h", lwd = 3, col = "blue",
+  main = "Defect Rate per Box (100 ct)", xlab = "Incidents", ylab = "Probability")
+abline(h = 0, col = "green2")
+
+round(dpois(0, lambda = defect_rate * box_size), 3)
+
+```

@@ -1,0 +1,9 @@
+Education,,,Age_Group,Count
+Did not complete high school,,,25-49,13
+Did not complete high school,,,>=50,27
+Completed high school,,,25-49,22
+Completed high school,,,>=50,22
+"College,1-3 years",,,25-49,17
+"College,1-3 years",,,>=50,11
+"College,4 or more years",,,25-49,20
+"College,4 or more years",,,>=50,7

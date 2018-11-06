@@ -1,0 +1,164 @@
+---
+title: "Lesson 09: Statistical Inference Hypothesis Testing for Single Populations"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: spacelab
+    df_print: paged
+---
+
+```{r knitr-setup, include = FALSE}
+library(knitr)
+
+knitr::opts_chunk$set(eval = TRUE)
+
+opts_chunk$set(fig.align = "center", fig.height = 4, fig.width = 8) # for html
+opts_knit$set(progress = FALSE, verbose = TRUE)
+
+```
+
+
+```{r additional-libraries, echo=FALSE}
+
+library(data.table, quietly = TRUE, warn.conflicts = FALSE)
+
+assignInNamespace("cedta.pkgEvalsUserCode", c(data.table:::cedta.pkgEvalsUserCode, "rtvs"), "data.table")
+
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggthemes, quietly = TRUE, warn.conflicts = FALSE)
+library(gridExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(kableExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(GGally, quietly = TRUE, warn.conflicts = FALSE)
+library(knitr, quietly = TRUE, warn.conflicts = FALSE)
+library(RColorBrewer, quietly = TRUE, warn.conflicts = FALSE)
+library(moments, quietly = TRUE, warn.conflicts = FALSE)
+library(gplots, quietly = TRUE, warn.conflicts = FALSE)
+
+theme_set(theme_light())
+
+# Theme Overrides
+theme_update(plot.title = element_text(hjust = 0.5),
+			 axis.text.x = element_text(size = 10),
+			 axis.text.y = element_text(size = 10),
+			 axis.title = element_text(face = "bold", size = 12, colour = "steelblue4"),
+			 legend.position = "top", legend.title = element_blank())
+
+pretty_kable <- function(data, title, dig = 2) {
+	kable(data, caption = title, digits = dig, big.mark = "'") %>%
+		kable_styling(bootstrap_options = c("striped", "hover"))
+}
+
+pretty_vector <- function(vec, label = "") {
+	pander::pander(vec)
+}
+
+lp.w <- "E:/GitHub/R-Playground"
+lp.h <- "C:/Projects/R/Playground"
+
+if (file.exists(lp.w)) {
+  base.dir <- lp.w
+} else if (file.exists(lp.h)) {
+  base.dir <- lp.h
+}
+
+data.path <- paste0(base.dir, "/Classes/MSDS401/Exercises/_Data Files/")
+
+# simple replacement for read.csv that returns a data.table.
+loadDataFile <- function(file_name) {
+  data.raw <- fread(paste0(data.path, file_name),
+  header = TRUE, stringsAsFactors = FALSE, na.strings = c("NA", ""))
+
+  data <- setNames(data.raw, tools::toTitleCase(tolower(names(data.raw))))
+
+  return(data)
+}
+
+```
+
+## Analysis of Variance
+
+```{r data_tableware}
+tableware <- loadDataFile("tableware.csv")
+
+str(tableware)
+
+```
+
+### 1.) Rate ~ Type
+
+Use the tableware.csv data to test the hypothesis that the mean RATE for the five levels of TYPE are
+equal. Test the hypothesis using a 0.05 significance level. Plot means and confidence intervals of RATE
+for each level of TYPE (Use the example given in Davies Chapter 9.3 One-way ANOVA (pp. 218-223)).
+
+```{r}
+
+aov_type = aov(Rate ~ Type, data = tableware)
+summary(aov_type)
+
+lm_type <- lm(Rate ~ Type, data = tableware)
+summary(lm_type)
+
+plotmeans(Rate ~ Type, data = tableware)
+
+byType <- tableware[, .(Rate.mean = mean(Rate), Rate.sd = sd(Rate), N = length(Rate), tfrac = qt(p = .975, df = length(Rate) - 1)), by = list(Type)][,
+	":="(Lower = Rate.mean - tfrac * Rate.sd / sqrt(N), Upper = Rate.mean + tfrac * Rate.sd / sqrt(N))]
+
+ggplot(byType, aes(x = Rate.mean, y = Type)) +
+	geom_point(color = "steelblue", size = 3) +
+	geom_errorbarh(aes(xmin = Lower, xmax = Upper), height = .3) +
+    ggtitle("Average Rate by Type")
+
+```
+
+```{r}
+
+```
+
+### 2.) Price ~ Type
+
+Use the tableware.csv data to test the hypothesis that the mean PRICE for the five levels of TYPE are
+equal. Test the hypothesis using a 0.05 significance level. Plot means and confidence intervals of PRICE
+for each level of TYPE (Use the example given in Davies Chapter 9.3 One-way ANOVA (pp. 218-223)).
+
+```{r}
+
+price_model <- { Price ~ Type }
+
+price_fit <- lm(price_model, data = tableware)
+
+print(summary(price_fit))
+
+print(anova(price_fit))
+
+print(confint(price_fit, level = 0.95))
+
+```
+
+### 3.)
+
+Use the hot_dogs.csv data. Perform a one-way AOV by Type on Calories and also Sodium (Use the
+example given in Davies Chapter 9.3 One-way ANOVA (pp. 218-223)). Use Tukey’s Honest Significant
+Difference Test if the F-test is significant. Generate boxplots.
+
+```{r}
+hotdogs <- loadDataFile("hot_dogs.csv")
+
+ggplot(hotdogs, aes(x = Type, y = Calories, group = Type)) +
+	geom_boxplot(fill = "steelblue")
+
+ggplot(hotdogs, aes(x = Type, y = Sodium, group = Type)) +
+	geom_boxplot(fill = "steelblue")
+
+calories.anova <- aov(Calories ~ Type, data = hotdogs)
+summary(calories.anova)
+
+sodium.anova <- aov(Sodium ~ Type, data = hotdogs)
+summary(sodium.anova)
+
+# Perform Tukey's Honest Significant Difference Test
+TukeyHSD(calories.anova, conf.level = 0.95)
+
+```

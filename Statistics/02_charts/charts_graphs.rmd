@@ -1,0 +1,326 @@
+---
+title: "Lesson 02: Charts and Graphs"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: spacelab
+    df_print: paged
+---
+
+```{r knitr-setup, include = FALSE}
+library(knitr)
+
+knitr::opts_chunk$set(eval = TRUE)
+
+opts_chunk$set(fig.align = "center", fig.height = 4, fig.width = 8) # for html
+opts_knit$set(progress = FALSE, verbose = TRUE)
+
+```
+
+
+```{r additional-libraries, echo=FALSE}
+
+library(data.table, quietly = TRUE, warn.conflicts = FALSE)
+
+assignInNamespace("cedta.pkgEvalsUserCode", c(data.table:::cedta.pkgEvalsUserCode, "rtvs"), "data.table")
+
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggthemes, quietly = TRUE, warn.conflicts = FALSE)
+library(gridExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(kableExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(GGally, quietly = TRUE, warn.conflicts = FALSE)
+library(knitr, quietly = TRUE, warn.conflicts = FALSE)
+library(RColorBrewer, quietly = TRUE, warn.conflicts = FALSE)
+library(moments, quietly = TRUE, warn.conflicts = FALSE)
+library(gplots, quietly = TRUE, warn.conflicts = FALSE)
+
+theme_set(theme_light())
+
+# Theme Overrides
+theme_update(plot.title = element_text(hjust = 0.5),
+			 axis.text.x = element_text(size = 10),
+			 axis.text.y = element_text(size = 10),
+			 axis.title = element_text(face = "bold", size = 12, colour = "steelblue4"),
+			 legend.position = "top", legend.title = element_blank())
+
+pretty_kable <- function(data, title, dig = 2) {
+	kable(data, caption = title, digits = dig, big.mark = "'") %>%
+		kable_styling(bootstrap_options = c("striped", "hover"))
+}
+
+pretty_vector <- function(vec, label = "") {
+	pander::pander(vec)
+}
+
+lp.w <- "E:/GitHub/R-Playground"
+lp.h <- "C:/Projects/R/Playground"
+
+if (file.exists(lp.w)) {
+	base.dir <- lp.w
+} else if (file.exists(lp.h)) {
+	base.dir <- lp.h
+}
+
+data.path <- paste0(base.dir, "/Classes/MSDS401/Exercises/_Data Files/")
+
+# simple replacement for read.csv that returns a data.table.
+loadDataFile <- function(file_name) {
+	data.raw <- fread(paste0(data.path, file_name),
+  header = TRUE, stringsAsFactors = FALSE, na.strings = c("NA", ""))
+
+	data <- setNames(data.raw, tools::toTitleCase(tolower(names(data.raw))))
+
+	return(data)
+}
+
+```
+
+> __Data Set:__
+
+```{r data-prep, echo = FALSE}
+
+data.path <- "C:/Projects/R/Playground/Classes/MSDS401/Exercises/02_charts/data/"
+
+data.raw <- as.data.table(fread(paste0(data.path, "home_prices.csv"),
+  header = TRUE, stringsAsFactors = FALSE, na.strings = c("NA", "")))
+
+home.sales <- setNames(data.raw, tools::toTitleCase(tolower(names(data.raw))))
+
+home.sales$Year <- as.Date(paste(home.sales$Year, 12, 31, sep = "-"))
+home.sales$Baths <- factor(home.sales$Baths, ordered = TRUE)
+home.sales$Feats <- factor(home.sales$Feats, ordered = TRUE)
+home.sales$Nbr <- home.sales$Nbr == "YES"
+home.sales$Corner <- home.sales$Corner == "YES"
+
+glimpse(home.sales)
+
+```
+
+### Exercises 2.1
+
+> __Exercises: 1__: For the following exercises use hist(), plot(), boxplot() and par() functions supplied by R.
+
+##### a.) Construct a histogram for PRICE. Describe the distribution shape.
+
++ _Base R:_
+
+```{r ex_2.1_a_br, echo = FALSE}
+
+br.price_hist <- function() {
+    with(home.sales, hist(Price,
+        breaks = pretty(home.sales$Price),
+        main = "Distribution of Home Prices",
+        xlab = "Price", ylab = "Frequency",
+        col="blue"))
+}
+
+br.price_hist()
+
+```
+
++ _ggplot2:_
+
+```{r ex_2.1_a_gg, echo = FALSE}
+
+gg.price_hist <- ggplot(home.sales, aes(Price, fill = ..count..)) +
+	geom_histogram(breaks = pretty(home.sales$Price)) +
+	scale_x_continuous(labels = scales::dollar) +
+	labs(title = "Distribution of Home Prices") +
+	theme(plot.title = element_text(hjust = 0.5)) +
+	theme(axis.text.x = element_text(face = "bold", size = 12)) +
+	theme(axis.text.y = element_text(face = "bold", size = 12)) +
+	theme(legend.position = "top", legend.title = element_blank())
+
+gg.price_hist
+
+```
+
+> __Answer__: The distribution has a right skewed distibution, indicating that more homes were sold with lower prices.
+
+##### b) Construct a histogram for TAX. Describe the distribution shape.
+
++ _Base R:_
+
+```{r ex_2.1_b_br, echo = FALSE}
+
+br.tax_hist <- function() {
+    with(home.sales,hist(Tax,
+        breaks = pretty(home.sales$Tax),
+        main = "Distribution of Home Taxes",
+        xlab = "Tax", ylab = "Frequency",
+        col="orange"))
+}
+
+br.tax_hist()
+
+```
+
++ _ggplot2:_
+
+```{r ex_2.1_b_gg, echo = FALSE}
+
+gg.tax_hist <- ggplot(home.sales, aes(Tax, fill = ..count..)) +
+	geom_histogram(breaks = pretty(home.sales$Tax)) +
+	scale_x_continuous(labels = scales::dollar) +
+	theme(plot.title = element_text(hjust = 0.5)) +
+	theme(axis.text.x = element_text(face = "bold", size = 12)) +
+	theme(axis.text.y = element_text(face = "bold", size = 12)) +
+	theme(legend.position = "top", legend.title = element_blank()) +
+    labs(title = "Distribution of Home Taxes")
+
+gg.tax_hist
+
+```
+
+##### c) Construct a scatterplot displaying TAX versus PRICE. Is there a relationship?
+
++ _Base R:_
+
+```{r ex_2.1_c_br, echo = FALSE}
+
+plot(home.sales$Price, home.sales$Tax,
+  main = "Tax vs. Price",
+  xlab = "Tax", ylab = "Price",
+  bg = "black", pch = 16)
+
+# Offset Y to Origin, rough manual adjustment
+abline(lm( I( Tax ) ~ I( Price ), data = home.sales), col = "red")
+
+```
+
++ _ggplot2:_
+
+```{r ex_2.1_c_gg, echo = FALSE}
+
+ggplot(home.sales, aes(Tax, Price)) +
+	geom_point() +
+	geom_smooth( method = "lm") +
+	scale_x_continuous(labels = scales::dollar) +
+	scale_y_continuous(labels = scales::dollar) +
+	labs(title = "Tax vs. Price") +
+	theme(plot.title = element_text(hjust = 0.5)) +
+	theme(axis.text.x = element_text(face = "bold", size = 12)) +
+	theme(axis.text.y = element_text(face = "bold", size = 12)) +
+	theme(legend.position = "top", legend.title = element_blank())
+
+```
+
+> __Answer:__ The relationship between TAX and PRICE is approximately linear.
+
+##### d) Construct a stem-and-leaf plot for TAX using stem().
+
++ _Base R:_
+
+```{r ex_2.1_d_br, echo = FALSE}
+
+stem(home.sales$Tax)
+
+```
+
++ _ggplot2:_
+
+```{r ex_2.1_d_gg, echo = FALSE}
+
+ggplot(home.sales, aes(x = -Tax)) +
+	geom_histogram(bins = 21) +
+	coord_flip() +
+	labs(title = "Graphical Distribution") +
+	theme(plot.title = element_text(hjust = 0.5)) +
+	theme(axis.text.x = element_blank()) +
+    theme(axis.text.y = element_blank())
+
+```
+
+##### e) Use the par() and mfrow() or mfcol() functions to construct a multi-plot figure of two rows and one column showing the histograms for PRICE and TAX.
+
++ _Base R:_
+
+```{r ex_2.1_e_br, echo = FALSE}
+
+opar = par(mfrow = c(2, 1), mar = c(2, 1, 1, .5))
+
+br.price_hist()
+br.tax_hist()
+
+par(opar)
+
+```
+
++ _ggplot2:_
+
+```{r ex_2.1_e_gg, echo = FALSE}
+
+grid.arrange(gg.price_hist, gg.tax_hist, nrow = 2)
+
+```
+
+### Exercises 2.2
+
+> __Exercises: 2__: For the following exercises use hist() and, within hist(), breaks.
+
+##### a) Construct a histogram for PRICE starting the first class at 1300 with a class width of 600.
+
++ _Base R:_
+
+```{r ex_2.2_a_br, echo = FALSE}
+
+inc <- 600
+price_breaks <- seq( from = 1300, to = max(home.sales$Price) + inc, by = inc )
+
+with(home.sales, hist(Price,
+	breaks = price_breaks,
+	main = "Distribution of Home Prices",
+	xlab = "Price", ylab = "Frequency",
+	col = "blue"))
+
+```
+
++ _ggplot2:_
+
+```{r ex_2.2_a_gg, echo = FALSE}
+
+ggplot(home.sales, aes(Price, fill = ..count..)) +
+	geom_histogram(breaks = price_breaks) +
+	scale_x_continuous(labels = scales::dollar) +
+	labs(title = "Distribution of Home Prices") +
+	theme(plot.title = element_text(hjust = 0.5)) +
+	theme(axis.text.x = element_text(face = "bold", size = 12)) +
+	theme(axis.text.y = element_text(face = "bold", size = 12)) +
+	theme(legend.position = "top", legend.title = element_blank())
+
+```
+
+##### b) Construct a histogram for TAX starting the first class at 500 with a class width of 500.
+
++ _Base R:_
+
+```{r ex_2.2_b_br, echo = FALSE}
+
+inc <- 500
+tax_breaks <- seq(from = 500, to = max(home.sales$Tax) + inc, by = inc)
+
+with(home.sales, hist(Tax,
+	breaks = tax_breaks,
+	main = "Distribution of Home Taxes",
+	xlab = "Tax", ylab = "Frequency",
+	col = "orange"))
+
+```
+
++ _ggplot2:_
+
+```{r ex_2.2_b_gg, echo = FALSE}
+
+ggplot(home.sales, aes(Tax, fill = ..count..)) +
+	geom_histogram(breaks = tax_breaks) +
+	scale_x_continuous(labels = scales::dollar) +
+	theme(plot.title = element_text(hjust = 0.5)) +
+	theme(axis.text.x = element_text(face = "bold", size = 12)) +
+	theme(axis.text.y = element_text(face = "bold", size = 12)) +
+	theme(legend.position = "top", legend.title = element_blank()) +
+	labs(title = "Distribution of Home Taxes")
+
+```
