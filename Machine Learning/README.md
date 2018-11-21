@@ -5,7 +5,7 @@
 <h4>Assignment 1 - Program Objectives</h4>
 <p>This project is based on a collection of data from the ‘MSPA Software Survey’, in which the university gathered responses from students and faculty in relation to their own preferences and their perception of industry trends. The analysis provides code for data review in Python as well as initial data visualization tecqhniques and analysis of correlation.</p>
 
-<p><br><strong>Management Questions</strong></p>
+<p><strong>Management Questions</strong></p>
 
 <p>This project is based on a collection of data from the ‘MSPA Software Survey’, in which the university gathered responses from students and faculty in relation to their own preferences and their perception of industry trends. The analysis provides code for data review in Python as well as initial data visualization tecqhniques and analysis of correlation.</p>
 
@@ -19,7 +19,7 @@
 <h4>Assignment 2 - Term Deposit Participation</h4>
 <p>An exercise in modelling consumer behaviors with a binary response variable - is customer likely to purchase a service or not? Model techniques include SciKit Learn 'KNeighborsClassifier', 'Naive Bayes' & 'Logistic Regression' as well as cross validation methods such as ROC curve.</p>
 
-<p><br><strong>Management Questions</strong></p>
+<p><strong>Management Questions</strong></p>
 
 <p>Regarding the management problem, imagine that you are advising the bank about machine learning methods to guide telephone marketing campaigns.</p>
 
@@ -29,7 +29,7 @@
 </ul>
 
 <h4>Assignment 3 - Housing Sales Results, part 1</h4>
-<p>An exercise using SciKit Learn Machine Learning methods to determine the best fit for a linear model. The exercise uses the Boston housing data from: David A. Belsley, Edwin Kuh, and Roy E.Welsch. 'Regression Diagnostics: Identifying Influential Data and Sources of Collinearity.' I begin with data evaluation and visualization, and then evaluate modeling techniques using SciKit Learn Linear, Lasso and Ridge Regression models. I also experiement with data transformation methods to normalize the data, and the measure the changes in model performance.</p>
+<p>An exercise using SciKit Learn Machine Learning methods to determine the best fit for a linear model. The exercise uses the Boston housing data from </p>
 
 <h4>Assignment 4 - Housing Sales Results, part 2</h4>
 <p>This exercise builds on the linear regression models we developed for assignment 3 and uses the same data set. We drop the variable 'neighborhood' and use the remaining continuous data variables to build multiple models using SciKit Learn: Ridge, DecisionTreeRegressor, RandomForestRegressor, & GradientBoostingRegressor. By experimenting with bootstrapping and data transformation techniques (Log transform), we are able to build models that perform better than the regression models in assignment 3.</p>
