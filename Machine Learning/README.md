@@ -71,8 +71,7 @@
 <blockquote>
   
   <h4>Management Problem</h4>
-  
-	<p>Imagine that you are advising a real estate brokerage firm in its attempt to employ machine learning methods.</p>
+  <p>Imagine that you are advising a real estate brokerage firm in its attempt to employ machine learning methods.</p>
       
   <p><strong>Management Questions</strong></p>
   
@@ -128,7 +127,7 @@
   
   <p>The Benchmark Experiment. Tested neural network structures should be explored within a benchmark experiment, a factorial design with at least two levels on each of two experimental factors (at least a 2x2 completely crossed design). But due to the time required to fit each neural network, we will observe only one trial for each cell in the design. Also, we will be using a simple training-and-test split with the split having been performed previously. That is, we use the training and test sets that come with <a href="https://en.wikipedia.org/wiki/MNIST_database">MNIST</a>.</p>
 
-	<p>An example experiment could include two values for the number of nodes per inner layer and two values for the number of inner layers. Various machine learning hyperparameter settings may be used.</p>
+<p>An example experiment could include two values for the number of nodes per inner layer and two values for the number of inner layers. Various machine learning hyperparameter settings may be used.</p>
 	
 </blockquote>
 
@@ -150,7 +149,7 @@
   
   <h4>Solution Overview</h4>
   
-	 <p>The objective of the analysis is to build a neural network that accurately classifies images of cats and dogs. The data set is a sub-set of the data used in the kaggle competition. It contains 12,500 cat pictures and 12,500 dog pictures. The example goes through the steps to prepare the data and assign values to Numpy arrays to concatenate, shape and scale the data easily. We then apply the layered DNN models developed for the previous assignment.</p>		
+<p>The objective of the analysis is to build a neural network that accurately classifies images of cats and dogs. The data set is a sub-set of the data used in the kaggle competition. It contains 12,500 cat pictures and 12,500 dog pictures. The example goes through the steps to prepare the data and assign values to Numpy arrays to concatenate, shape and scale the data easily. We then apply the layered DNN models developed for the previous assignment.</p>		
 
 </blockquote>    
   
@@ -163,7 +162,7 @@
   
   <p>Suppose management is thinking about using a language model to classify written customer reviews, call, and complaint logs. If the most critical customer messages can be identified, then customer support personnel can be assigned to contact those customers.</p>
   
-	<p>How would you advise senior management? What kinds of systems and methods would be most relevant to the customer services function? Considering the results of this assignment, what is needed to make an automated customer support system that can identify negative customer feelings? What can data scientists do to make language models more useful in customer service function?</p>
+<p>How would you advise senior management? What kinds of systems and methods would be most relevant to the customer services function? Considering the results of this assignment, what is needed to make an automated customer support system that can identify negative customer feelings? What can data scientists do to make language models more useful in customer service function?</p>
   
   <h4>Solution Overview</h4>
   
