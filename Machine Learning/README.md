@@ -162,12 +162,14 @@
   
   <p>Suppose management is thinking about using a language model to classify written customer reviews, call, and complaint logs. If the most critical customer messages can be identified, then customer support personnel can be assigned to contact those customers.</p>
   
-<p>How would you advise senior management? What kinds of systems and methods would be most relevant to the customer services function? Considering the results of this assignment, what is needed to make an automated customer support system that can identify negative customer feelings? What can data scientists do to make language models more useful in customer service function?</p>
-  
+<ul>
+  <li>How would you advise senior management? What kinds of systems and methods would be most relevant to the customer services function?</li>
+  <li>Considering the results of this assignment, what is needed to make an automated customer support system that can identify negative customer feelings?</li>
+  <li>What can data scientists do to make language models more useful in customer service function?</li>
+  </ul>
+ 
   <h4>Solution Overview</h4>
   
-  <p>This assignment involves working with language models developed with pre-trained word vectors. We use sentences (sequences of words) to train language models for predicting movie review sentiment (thumbs-up versus thumbs-down).</p>
-  
-  <p>We study effects of word vector size, vocabulary size, and neural network structure (hyperparameters) on classification performance. We build on resources for recurrent neural networks(RNNs) as implemented in TensorFlow.</p>
+<p>This assignment involves working with language models developed with pre-trained word vectors. We used sentences (sequences of words) to train language models for predicting movie review sentiment (thumbs-up versus thumbs-down). We study effects of word vector size, vocabulary size, and neural network structure (hyperparameters) on classification performance. We build on resources for recurrent neural networks (RNNs) as implemented in TensorFlow. RNNs are well suited to the analysis of sequences, as needed for natural language processing (NLP).</p>
 
 </blockquote>
