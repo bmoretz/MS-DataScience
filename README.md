@@ -23,3 +23,7 @@ For more information, please visit the <a href="https://sps.northwestern.edu/mas
 <h4>MSDS 411 - Data Modeling for Unsupervised Learning</h4>
 
 <p>This course introduces data modeling for studies in which there is no clear distinction between explanatory and response variables. The objective may be to explain relationships among many continuous variables in terms of underlying dimensions, latent variables, or factors, as with principal components and factor analysis. The objective may be to find a lower-dimensional representation for multivariate cross-classified data, as with log-linear models. The objective may be to construct a visualization of variables or objects, as with traditional multidimensional scaling and t-distributed stochastic neighbor embedding. Or the objective may be to identify groups of variables and/or objects that are similar to one another, as with cluster analysis and biclustering. Students work on research and programming assignments, exploring multivariate data and methods.</p>
+
+<h4>MSDS 451 - Financial and Risk Analytics</h4>
+
+<p>Building upon probability theory and inferential statistics, this course provides an introduction to risk analytics. Examples from economics and finance show how to incorporate risk within regression and time series models. Monte Carlo simulation is used to demonstrate how variability in data affects uncertainty about model parameters. Additional topics include subjectivity in risk analysis, causal modeling, stochastic optimization, portfolio analysis, and risk model evaluation.</p>
