@@ -1,0 +1,285 @@
+---
+title: ''
+mainfont: Arial
+fontsize: 12pt
+documentclass: report
+header-includes:
+- \PassOptionsToPackage{table}{xcolor}
+- \usepackage{caption}
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \usepackage[table]{xcolor}
+- \usepackage{fancyhdr}
+- \usepackage{boldline}
+- \usepackage{tipa}
+   \definecolor{headergrey}{HTML}{545454}
+   \definecolor{msdblue}{HTML}{1C93D1}
+   \pagestyle{fancy}
+   \setlength\headheight{30pt}
+   \rhead{\color{headergrey}\today}
+   \fancyhead[L]{\color{headergrey}Moretz, Brandon}
+   \fancyhead[C]{\Large\bfseries\color{headergrey}Monte Carlo Simulations}
+   \rfoot{\color{headergrey}Module 1}
+   \lfoot{\color{headergrey}MSDS 451}
+   \fancyfoot[C]{\rmfamily\color{headergrey}Financial and Risk Analytics}
+geometry: left = 1cm, right = 1cm, top = 2cm, bottom = 3cm
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document:
+    fig_caption: yes
+    latex_engine: xelatex
+  html_document:
+    df_print: paged
+---
+
+
+```{r knitr_setup, include = FALSE}
+
+# DO NOT ADD OR REVISE CODE HERE
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, dev = 'png')
+options(knitr.table.format = "latex")
+
+```
+
+```{r report_setup, message = FALSE, warning = FALSE, include = FALSE}
+
+library(data.table, quietly = TRUE, warn.conflicts = FALSE)
+
+assignInNamespace("cedta.pkgEvalsUserCode", c(data.table:::cedta.pkgEvalsUserCode, "rtvs"), "data.table")
+
+library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggrepel, quietly = TRUE, warn.conflicts = FALSE)
+library(ggthemes, quietly = TRUE, warn.conflicts = FALSE)
+library(knitr, quietly = TRUE, warn.conflicts = FALSE)
+library(kableExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(Rblpapi, quietly = TRUE, warn.conflicts = FALSE)
+library(scales, quietly = TRUE, warn.conflicts = FALSE)
+library(pander, quietly = TRUE, warn.conflicts = FALSE)
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(formattable, quietly = TRUE, warn.conflicts = FALSE)
+library(grid, quietly = TRUE, warn.conflicts = FALSE)
+library(gridExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(png, quietly = TRUE, warn.conflicts = FALSE)
+library(extrafont, quietly = TRUE, warn.conflicts = FALSE)
+library(tinytex, quietly = TRUE, warn.conflicts = FALSE)
+library(stringr, quietly = TRUE, warn.conflicts = FALSE)
+library(lubridate, quietly = TRUE, warn.conflicts = FALSE)
+library(reshape2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggrepel, quietly = TRUE, warn.conflicts = FALSE)
+
+options(tinytex.verbose = TRUE)
+suppressMessages(library("tidyverse"))
+
+pretty_kable <- function(data, title, dig = 2) {
+  kable(data, caption = title, digits = dig) %>%
+    kable_styling(bootstrap_options = c("striped", "hover"))
+}
+
+theme_set(theme_gdocs())
+
+```
+
+```{r pander_setup, include = FALSE}
+
+panderOptions('table.alignment.default', function(df)
+    ifelse(sapply(df, is.numeric), 'right', 'left'))
+panderOptions('table.split.table', Inf)
+panderOptions('big.mark', ",")
+panderOptions('keep.trailing.zeros', TRUE)
+
+```
+
+#### Problem Background:
+
++ Suppose a hedge fund owns __$1,000,000__ of stock and used _$50,000_ of its own capital and _$950,000_ in borrowed money for the purchase.
+
++ Suppose that if the value of the stock falls below _$950,000_ at the end of any trading day, then the hedge fund will sell all the stock and repay the loan.
++ This will wipe out its $50,000 investment.
+
+The hedge fund is said to be leveraged __20:1__ since its position is _220_ times the amount of its own capital invested.
+
++ Suppose that the daily log returns on the stock have a mean of __0.05__/year and a standard deviation of __0.23__/year. 
+
+These can be converted to rates per trading day by dividing by 253 and sqrt(253), respectively.
+
+##### Initialization
+
+```{r, global_env, echo = T}
+
+# number of iterations in the sim.
+niter <- 1e5
+
+seed.capital <- 5e4
+initial.investment <- log(1e6)
+
+profit.threshold <- log(1.1e6)
+loss.threshold <- log(9.5e5)
+target.profit <- 1e5
+
+ret.avg <- 0.05
+ret.sd <- 0.23
+market.open <- 253
+
+simulate_market <- function(days) {
+  # generate random returns for N days
+  r <- rnorm(days, mean = ret.avg / market.open,
+            sd = ret.sd / sqrt(market.open))
+
+  # return the final log price after N days.
+  cumsum(r)
+}
+
+```
+
+\newpage
+
+### Problem 4
+######  What is the probability that the value of the stock will be below $950,000 at the close of at least one of the next 45 trading days?
+
+```{r, sim1, echo = T}
+
+# reproducible
+set.seed(2009)
+
+# setup storage
+outcomes <- list(below = rep(0, niter))
+
+# Simulation: Probability dips below $950,000.
+for (i in 1:niter) {
+
+  # simulate 45 trading days.
+  logPrice = initial.investment + simulate_market(45)
+
+  # miniumum price over next 45 days
+  minlogP = min(logPrice)
+
+  outcomes$below[i] = as.numeric(minlogP < loss.threshold)
+}
+
+```
+
+```{r, prob4, echo = F}
+
+p4 <- round(mean(outcomes$below), 4) * 100
+
+```
+
+_Probability the value of the stock is below $950,000 at least one of next 45 sessions:_ __`r p4`%__
+
+\newpage
+
+Suppose the hedge fund will:
+
++ sell the stock for a profit of at least __$100,000__ if the value of the stock rises to at least __$1,100,000__ at the end of one of the first _100_ trading days,
+
++ sell it for a loss if the value falls below __$950,000__ at the end of one of the first _100_ trading days, 
+
++ or sell it (for "FMV") after _100_ trading days if the closing price has stayed between _$950,000_ and _$1,100,000_.
+
+```{r, sim2, echo = T}
+
+# reproducible
+set.seed(2009)
+
+outcomes <- list(above = rep(0, niter),
+                 below = rep(0, niter),
+                 middle = rep(0, niter),
+                 pnl = rep(0, niter),
+                 ret = rep(0, niter))
+
+for (i in 1:niter) {
+
+  # simulate 100 trading days.
+  logPrice = initial.investment + simulate_market(100)
+
+  suppressWarnings({
+    # ignore Inf returned if condition not meet.
+    profit.day <- min(which(logPrice >= profit.threshold))
+    loss.day <- min(which(logPrice <= loss.threshold))
+  })
+
+  is.market <- profit.day == Inf && loss.day == Inf
+
+  # What was the exit condition of the position, hince the final price of the stock?
+  days.open <- ifelse(is.market, length(logPrice),
+                       min(profit.day, loss.day))
+
+  outcomes$above[i] <- min(profit.day) < min(loss.day)
+  outcomes$middle[i] <- is.market
+  outcomes$below[i] <- min(loss.day) < min(profit.day)
+
+  # p&l = ending value - initial investment
+  pnl <- exp(logPrice[days.open]) - exp(initial.investment)
+
+  # market pnl = use FMV, otherwise cap p/l
+  outcomes$pnl[i] <- pnl
+
+  # Calculate return (time-weighted)
+  outcomes$ret[i] <- (outcomes$pnl[i] / seed.capital) / days.open
+}
+
+# Verify we captured every simulation outcome.
+stopifnot(sum(outcomes$above) + sum(outcomes$below) + sum(outcomes$middle) == niter)
+
+```
+
+\newpage
+
+### Problem 5
+######  What is the probability that the hedge fund (strategy) will make a profit of at least _$100,000_?
+
+```{r, prob5, echo = T}
+
+prob.profit <- sum(outcomes$above) / length(outcomes$pnl)
+
+p5 <- round(mean(prob.profit), 4) * 100
+
+```
+
+_Probability the hedge fund (strategy) returns over $100,000 in profit:_ __`r p5`%__
+
+### Problem 6
+######  What is the probability that the hedge fund (strategy) will suffer a loss?
+
+```{r, prob6, echo = T}
+
+prob.loss <- sum(outcomes$below) / length(outcomes$below)
+
+p6 <- round(mean(prob.loss), 4) * 100
+
+```
+
+_Probability the hedge fund (strategy) returns a loss:_ __`r p6`%__
+
+### Problem 7
+######  What is the expected profit from this trading strategy?
+
+```{r, prob7, echo = T}
+
+p7 <- currency(mean(outcomes$pnl))
+
+```
+
+_Expected profit/loss of the hedge fund (strategy):_ __`r p7`__
+
+### Problem 8
+######  What is the expected return?
+
+```{r, prob8, echo = T}
+
+p8 <- round(mean(outcomes$ret), 5) * 100
+
+```
+
+_Expected (time-weighted) return of the hedge fund (strategy):_ __`r p8`%__

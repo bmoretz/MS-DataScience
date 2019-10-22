@@ -1,0 +1,360 @@
+---
+title: ''
+mainfont: Arial
+fontsize: 12pt
+documentclass: report
+header-includes:
+- \PassOptionsToPackage{table}{xcolor}
+- \usepackage{caption}
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \usepackage[table]{xcolor}
+- \usepackage{fancyhdr}
+- \usepackage{boldline}
+- \usepackage{tipa}
+   \definecolor{headergrey}{HTML}{545454}
+   \definecolor{msdblue}{HTML}{1C93D1}
+   \pagestyle{fancy}
+   \setlength\headheight{30pt}
+   \rhead{\color{headergrey}\today}
+   \fancyhead[L]{\color{headergrey}Moretz, Brandon}
+   \fancyhead[C]{\Large\bfseries\color{headergrey}Fitting Copula Models to Bivariate Returns}
+   \rfoot{\color{headergrey}Module 4}
+   \lfoot{\color{headergrey}MSDS 451}
+   \fancyfoot[C]{\rmfamily\color{headergrey}Financial and Risk Analytics}
+geometry: left = 1cm, right = 1cm, top = 2cm, bottom = 3cm
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document:
+    fig_caption: yes
+    latex_engine: xelatex
+  html_document:
+    df_print: paged
+---
+
+
+```{r knitr_setup, include = FALSE}
+
+# DO NOT ADD OR REVISE CODE HERE
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, dev = 'png')
+options(knitr.table.format = "latex")
+
+```
+
+```{r report_setup, message = FALSE, warning = FALSE, include = FALSE}
+
+library(data.table, quietly = TRUE, warn.conflicts = FALSE)
+
+assignInNamespace("cedta.pkgEvalsUserCode", c(data.table:::cedta.pkgEvalsUserCode, "rtvs"), "data.table")
+
+library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggrepel, quietly = TRUE, warn.conflicts = FALSE)
+library(ggthemes, quietly = TRUE, warn.conflicts = FALSE)
+library(knitr, quietly = TRUE, warn.conflicts = FALSE)
+library(kableExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(Rblpapi, quietly = TRUE, warn.conflicts = FALSE)
+library(scales, quietly = TRUE, warn.conflicts = FALSE)
+library(pander, quietly = TRUE, warn.conflicts = FALSE)
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(formattable, quietly = TRUE, warn.conflicts = FALSE)
+library(grid, quietly = TRUE, warn.conflicts = FALSE)
+library(gridExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(png, quietly = TRUE, warn.conflicts = FALSE)
+library(extrafont, quietly = TRUE, warn.conflicts = FALSE)
+library(tinytex, quietly = TRUE, warn.conflicts = FALSE)
+library(stringr, quietly = TRUE, warn.conflicts = FALSE)
+library(lubridate, quietly = TRUE, warn.conflicts = FALSE)
+library(reshape2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggrepel, quietly = TRUE, warn.conflicts = FALSE)
+library(mnormt, quietly = TRUE, warn.conflicts = FALSE)
+library(Ecdat, quietly = TRUE, warn.conflicts = FALSE)
+library(MASS, quietly = TRUE, warn.conflicts = FALSE)
+library(copula, quietly = TRUE, warn.conflicts = FALSE)
+library(fGarch, quietly = TRUE, warn.conflicts = FALSE)
+
+options(tinytex.verbose = TRUE)
+suppressMessages(library("tidyverse"))
+
+pretty_kable <- function(data, title, dig = 2) {
+  kable(data, caption = title, digits = dig) %>%
+    kable_styling(bootstrap_options = c("striped", "hover"))
+}
+
+theme_set(theme_light())
+
+# Theme Overrides
+theme_update(plot.title = element_text(hjust = 0.5),
+             axis.text.x = element_text(size = 10),
+             axis.text.y = element_text(size = 10),
+             axis.title = element_text(face = "bold", size = 12, colour = "steelblue4"),
+             legend.position = "top", legend.title = element_blank())
+
+data.dir <- "D:/Projects/MSDS-RiskAnalytics/datasets/"
+
+```
+
+```{r pander_setup, include = FALSE}
+
+knitr::opts_chunk$set(comment = NA)
+
+panderOptions('table.alignment.default', function(df)
+    ifelse(sapply(df, is.numeric), 'right', 'left'))
+panderOptions('table.split.table', Inf)
+panderOptions('big.mark', ",")
+panderOptions('keep.trailing.zeros', TRUE)
+
+```
+
+### Problem Background
+######  Fitting Copula Models
+
+In this lab we are going to fit copula models to a bivariate data set of daily returns on IBM and S&P500 Index.
+
+First, we need to fit a model with the univariate marginal t-distributions and a t-copula.
+
+This model will have three degrees of freedom parameters:
+
++ IBM tail index
++ S&P 500 Index tail index
++ Joint tail index (the copula)
+
+```{r, mle_bivariate_t, echo = T}
+
+net.returns <- read.csv(paste0(data.dir, "IBM_SP500_04_14_daily_netRtns.csv"),
+                        header = T)
+
+ibm <- net.returns[, "IBM"]
+sp500 <- net.returns[, "SP500"]
+
+suppressWarnings({
+  est.ibm = as.numeric( fitdistr( ibm, "t" )$estimate )
+  est.sp500 = as.numeric( fitdistr( sp500, "t" )$estimate )
+})
+
+est.ibm[2] = est.ibm[2] * sqrt( est.ibm[3] / (est.ibm[3]-2) )
+est.sp500[2] = est.sp500[2] * sqrt( est.sp500[3] / (est.sp500[3]-2) )
+
+```
+
+The univariate estimates will be used as starting values when we estimate the _meta-t_ distribution is fit by maximum liklihood. Before we do that, we need to compute an estimate of the correlation coefficent in the _t_-copula.
+
+### Problem 1
+###### _Using Kendall's tau, compute __omega__, which is the estimate of the Pearson correlation from Kendall's tau._
+
+From __8.27__ we have Kendall's tau, $\rho_\tau$, = 
+
+$\rho_\tau(Y_i, Y_j) = \frac{2}{\pi}arcsin(\Omega_{i,j})$.
+
+Inverting, we derive that:
+
+$\Omega_{i,j} = sin[\frac{\pi}{2}\rho_\tau(Y_i, Y_j)]$
+
+```{r, pearson_cor, echo = T}
+
+cor_tau = cor(ibm, sp500, method = "kendall")
+omega = sin((pi/2) * cor_tau)
+  
+```
+
+$\Omega = `r format(round(omega, 6), scientific=F)`$
+
+\newpage
+
+The _t_-copula using omega as the correlation parameter and 4 as the degrees of freedom:
+
+```{r, t_copula, echo = T}
+
+cop_t_dim2 <- tCopula(omega, dim = 2, dispstr = "un", df = 4)
+
+```
+
+```{r, t_copula_disp, echo = F}
+cop_t_dim2
+```
+
+Now fit copulas to the uniformed-transformed data:
+
+```{r, t_copula_fit, echo = T}
+
+n = nrow(net.returns)
+
+data1 = cbind( pstd( ibm, mean=est.ibm[1], sd=est.ibm[2], nu=est.ibm[3] ),
+               pstd( sp500, mean=est.sp500[1], sd=est.sp500[2], nu=est.sp500[3] ) )
+
+data2 = cbind( rank(ibm)/(n+1), rank(sp500)/(n+1) )
+
+ft1 = fitCopula(cop_t_dim2, data=data1, method="ml", start = c(omega,4))
+ft2 = fitCopula(cop_t_dim2, data=data2, method="ml", start = c(omega,4))
+
+```
+
+### Problem 2
+###### Explain the difference between methods used to obtain the two estimates _ft1_ and _ft2_.
+
+Here we are fitting the copulas to the uniform-transformed data. One method is parameteric (the t-distribution) and one is non-parametric (uniform).
+
+__data1__ is computed using the probability density function for the standard t-distrubution, since we previously estimated the paramters to fit a t-distribution to the respective returns using the __fitdistr__ function above.
+
+__data2__ is computed using the percentile rank method.
+
+Both of these methods are calculating the cumulative density of the marginal values in IBM and SP500, respectively.
+
+Below we will have a quick visual inspection of the densities of the two methods.
+
+```{r, marginal_density_1, fig.height=4, echo = F}
+
+dt1 <- data.table(IBM = data1[, 1], SP500 = data1[, 2])
+
+p1 <- ggplot(dt1) +
+  geom_histogram(aes(IBM, y = ..density..), bins = 40, alpha = .5) +
+  geom_density(aes(IBM), lwd = 1)
+
+p2 <- ggplot(dt1) +
+  geom_histogram(aes(SP500, y = ..density..), bins = 40, alpha = .5) +
+  geom_density(aes(SP500), lwd = 1)
+
+grid.arrange(p1, p2, nrow = 2, top  = "data1: Marginal Densities")
+
+```
+
+```{r, marginal_density_2, fig.height=4, echo = F}
+
+dt2 <- data.table(IBM = data2[, 1], SP500 = data2[, 2])
+
+p3 <- ggplot(dt2) +
+  geom_histogram(aes(IBM, y = ..density..), bins = 40, alpha = .5) +
+  geom_density(aes(IBM), lwd = 1)
+
+p4 <- ggplot(dt2) +
+  geom_histogram(aes(SP500, y = ..density..), bins = 40, alpha = .5) +
+  geom_density(aes(SP500), lwd = 1)
+
+grid.arrange(p3, p4, nrow = 2, top  = "data2: Marginal Densities")
+
+```
+
+\newpage
+
+###### Do the two estimates seem significantly different (_in a practical sense_)?.
+
+```{r, t_copula_fit_disp, echo = T}
+
+summary(ft1)
+
+summary(ft2)
+
+```
+
+These two estimates are fairly close to each other for practical purposes.
+
+However, I think method one would be a more robust estimate due to the marginals coming from a fitted t-distribution, versus a _truly uniform_ ranking.
+
+\newpage
+
+### Problem 3
+
+Next, we will define a meta-_t_-distribution by specifying its _t_-copula and its univariate marginal distributions.
+
+```{r, fit_meta-t_copula, echo = T}
+
+mvdc_t_t = mvdc( cop_t_dim2, c("std","std"), list(
+           list(mean=est.ibm[1],sd=est.ibm[2],nu=est.ibm[3]),
+           list(mean=est.sp500[1],sd=est.sp500[2],nu=est.sp500[3])))
+
+```
+
+```{r, fit_meta-t_copula_disp, echo = T}
+
+mvdc_t_t
+
+```
+
+Now we fit the meta _t_-distribution.
+
+```{r, fit_meta_t_mle, echo = T}
+
+start = c(est.ibm, est.sp500, ft1@estimate)
+objFn = function(param) -loglikMvdc( param, cbind(ibm,sp500), mvdc_t_t)
+tic = proc.time()
+ft = optim(start, objFn, method="L-BFGS-B",
+           lower = c(-.1,0.001,2.2, -0.1,0.001,2.2,  0.2,2.5),
+           upper = c( .1,   10, 15,  0.1,   10, 15,  0.9, 15) )
+toc = proc.time()
+total_time = toc - tic ; total_time[3]/60
+
+```
+
+```{r, param_est, echo = F}
+
+params.disp <- round(ft$par, 6)
+
+rho <- ft$par[7]
+nu <- ft$par[8]
+
+```
+
+### What are the estimates of the copula parameters?
+
+For $C_{t(\Omega, v)}$
+
++ $\Omega = `r format(params.disp[7], scientific = F)`$
++ $\nu = `r format(params.disp[8], scientific = F)`$
+
+### What are the estimates of the parameters in the univariate marginal distributions?
+
+\begin{table}[H]
+\centering
+\caption{Marginal t-distribution estimates}
+\begin{tabular}{|l|l|l|l|}
+\hline
+Symbol & $\hat{\mu}$ & $\hat{\sigma}$ & $\hat{\nu}$ \\ \hline
+IBM & $`r format(params.disp[1], scientific=F)`$ & $`r format(params.disp[2], scientific=F)`$ & $`r format(params.disp[3], scientific=F)`$ \\ \hline
+SP500 & $`r format(params.disp[4], scientific=F)`$ & $`r format(params.disp[5], scientific=F)`$ & $`r format(params.disp[6], scientific=F)`$ \\ \hline
+\end{tabular}
+\end{table}
+
+### Was the estimation method maximum likelihood, semiparametric pseudo-maximum likelihood, or parametric pseudo-maximum likelihood?
+
+Here, since we are estimating the parameters of the marginal distributions with the parameters of the t-copula at the same time, this is a maximum likelihood estimate.
+
+### Estimate the coefficent of lower tail dependence for this copula.
+
+From __8.21__ we have:
+
+$\lambda_{\ell} = 2F_{t, \nu+1}\bigg\{-\sqrt{\frac{(\nu+1)(1-\rho)}{1 + \rho}}\bigg\}$
+
+Where,
+
++ $\nu = `r format(params.disp[7], scientific = F)`$
++ $\rho = `r format(params.disp[8], scientific = F)`$
+
+```{r, lower_tail_dependence, echo = T}
+
+threshold <- .01
+
+# Method 1: book formula
+
+x <- -sqrt( ( nu+1 ) * ( 1-rho ) / ( 1+rho ) )
+lambda <- 2 * pt( x, nu + 1)
+
+# Method 2: package function
+lambda2 <- fitLambda(data1, method = c("t"), p = min( 100 / nrow(data1), 0.1),
+          lower.tail = TRUE, verbose = F)
+
+# assert similarity
+stopifnot((lambda - lambda2$Lambda[1,2]) < threshold)
+
+```
+
+$\lambda_{\ell} = `r format(round(lambda, 6), scientific = F)`$
