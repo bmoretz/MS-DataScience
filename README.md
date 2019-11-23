@@ -31,3 +31,14 @@ For more information, please visit the <a href="https://sps.northwestern.edu/mas
 <h4>MSDS 451 - Financial and Risk Analytics</h4>
 
 <p>Building upon probability theory and inferential statistics, this course provides an introduction to risk analytics. Examples from economics and finance show how to incorporate risk within regression and time series models. Monte Carlo simulation is used to demonstrate how variability in data affects uncertainty about model parameters. Additional topics include subjectivity in risk analysis, causal modeling, stochastic optimization, portfolio analysis, and risk model evaluation.</p>
+
+<h3>Capstone</h3>
+
+<h4>Quantum Capital</h4>
+
+<p>The main objective of the project is to model the price movements and forecasts of energy commodities, including gasoline, heating oil, crude (WTI and Brent) and natural gas. We will be developing a proprietary data source derived from publicly available information published to the primary commodity exchanges. Using this bespoke dataset, our research efforts will be focused on using our domain-knowledge as well as our analytical and quantitative technical capabilities to develop predictive models as they relate to understanding the financial markets for energy commodities.</p>
+
+<ul>
+	<li><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Capstone/Quantum-Capital-Pitch-Deck.pdf">Investor Pitch Deck</a></li>
+	<li><a href="https://bmoretz.shinyapps.io/quantumcapital/" target="_blank">Investor Dashboard</a></p></li>
+</ul>
