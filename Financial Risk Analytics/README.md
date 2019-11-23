@@ -227,30 +227,29 @@ Show that ℜ(P1 + P2) ≤ ℜ(P1) + ℜ(P2) under joint normality.</p>
   
 </blockquote>
 
-<h3>9 - Factor Models</h3>
+<h3>9 - Fama-French Model</h3>
 
 <blockquote>
   
   <h4>Background</h4>
   
-  <p></p>
+  <p>Factor model (including PCA) is a good way to summarize the covariances and mean returns of a portfolio of stocks. Indeed, all the examples in the textbook concern contemporaneous factors, factor loadings, and returns. However, it won't be terribly exciting if it can't be used to predict future covariances and returns. There is no reason why the returns cannot be future returns instead of contemporaneous returns.</p>
   
   <ul>
-	  <li></li>
-	  <li></li>
-	  <li></li>
-	  <li></li>
+	  <li>Often, we do not need accurate prediction of stock returns from a factor model to profit from it - the model only need to correctly predict their relative returns. How do we generate profit from a portfolio of stocks if we can only predict their relative returns r_i - r_j, for all pairs of stocks i and j?</li>
+	  <li>Just because a factor model is cross-sectional does not mean that its factors or factor loadings are unchanging with time. For example, the B/M and D factors in section 18.5 are certainly not going to stay constant throughout time. It is called cross-sectional only because our regression fit is taken at just one snapshot in time, and has to be repeated over again at the next time step.</li>
+	  <li>I used to be confused about what is a factor vs a factor loading. Here is a mnemonic: if the dependent variable is measured in returns, then the factors must also be measured in returns. E.g. the SML and HML factors in the Fama-French model. Factor loadings, on the other hand, must be dimensionless, as they measure the sensitivity of the returns to the factors. Are the principal components which are eigenvectors of the covariance matrix factors or factor loadings?</li>
   </ul>
   
   <h4>Solution Overview</h4>
   
-  <p></p>
+  <p>In this lab we are going to start with a one-factor CAPM model, and then extend it to the three-factor FamaFrench model.</p>
 
   <ul>
-	  <li></li>
-	  <li></li>
-	  <li></li>
-	  <li></li>
+	  <li>Which one(s) of the 4 stocks are “value” stocks, according to this model? How can you tell?</li>
+	  <li>Fama-French model fits which stock best? Worst?</li>
+	  <li>For UTX, which factor is most important besides the market return?</li>
+	  <li>Use the Fama-French model to predict the next day return of UTX.</li>
   </ul>
   
 </blockquote>
