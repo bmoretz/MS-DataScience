@@ -1,0 +1,568 @@
+---
+title: "Commodity Strategies"
+author: "Quantum Capital, LLC"
+output:
+  flexdashboard::flex_dashboard:
+    orientation: rows
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(ggrepel)
+library(GGally)
+library(ggthemes)
+library(formattable)
+library(scales)
+library(reshape2)
+library(stringr)
+library(rugarch)
+library(tidyverse) 
+library(tidyquant)
+library(timetk)
+library(forecast)
+library(sjmisc)
+library(plotly)
+library(highcharter)
+
+theme_set(theme_light())
+
+# Theme Overrides
+theme_update(plot.title = element_text(hjust = 0.5),
+             axis.text.x = element_text(size = 10),
+             axis.text.y = element_text(size = 10),
+             axis.title = element_text(face = "bold", size = 12, colour = "steelblue4"),
+             legend.position = "top", legend.title = element_blank())
+
+# Data files
+data.energy <- read_csv( file = "https://raw.githubusercontent.com/bmoretz/MSDS-Capstone/master/data/northwestern_energy_all_energy_ohlc.csv") 
+data.symbology <- read_csv( file = "https://raw.githubusercontent.com/bmoretz/MSDS-Capstone/master/data/symbol_description.csv")
+
+```
+
+```{r utility}
+
+getDataForSymbol <- function( symbol, data = data.energy ) {
+  
+  base.cols <- c("open", "high", "low", "close", "volume")
+  
+  symbol.cols <- c("nymex_date", as.vector(sapply(base.cols, function( c ) { 
+    paste0(symbol, "_", c) }, simplify = T)))
+  
+  data.symbol <- data[, symbol.cols]
+  data.symbol <- data.symbol[order(data.symbol$nymex_date),]
+  
+  colnames(data.symbol) <- as.vector(sapply(colnames(data.symbol), FUN = function(c) { 
+    str_replace(c, paste0(symbol, "_"), "") }, simplify = T))
+  
+  data.symbol <- data.symbol[complete.cases(data.symbol),]
+  data.symbol$spotPrice <- data.symbol[["close"]]
+  
+  # calculate returns from prices
+  prices <- data.symbol$spotPrice
+  n <- length(prices)
+  ret <- prices[-1] / prices[-n] - 1
+  
+  # store it
+  data.symbol$return <- c(0, ret)
+  data.symbol$logReturn <- log(1 + data.symbol$return)
+  
+  colnames(data.symbol)
+  
+  data.symbol[-c(1:2),] # throw away the first record that has no return data.
+}
+
+getDataForIndex <- function( symbol, data = data.energy ) {
+  
+  symbol.cols <- c("nymex_date", symbol)
+  
+  data.symbol <- data[, symbol.cols]
+  data.symbol <- data.symbol[order(data.symbol$nymex_date),]
+  data.symbol <- data.symbol[complete.cases(data.symbol),]
+
+  colnames(data.symbol) <- c("date", "close")
+  
+  # calculate returns from prices
+  prices <- data.symbol$close
+  n <- length(prices)
+  ret <- prices[-1] / prices[-n] - 1
+  
+  # store it
+  data.symbol$return <- c(0, ret)
+  data.symbol$logReturn <- log(1 + data.symbol$return)
+  
+  colnames(data.symbol)
+  
+  data.symbol[-c(1:2),] # throw away the first record that has no return data.
+}
+
+# Global Energy Commodities
+
+energy.commodities <- c("cl", "sc", "hp", "mt", "ng", "qa", "qg", "ve", "rb", "ho")
+
+commodites <- lapply(energy.commodities, FUN = function( s ) {
+  getDataForSymbol(s)
+})
+
+names(commodites) <- energy.commodities
+
+# Energy Indices
+
+energy.indices <- c("DSEN", "DSOG", "DSOI", "DSOL", "DSOQ", "OILBR", "OILSW", "OIV", "OSX", "OVX", "SG3I", "SG4A", "SG5I", "SPX", "SS1J", "UOI")
+
+indices <- lapply(energy.indices, FUN = function( s ) {
+  getDataForIndex(s)
+})
+
+names(indices) <- energy.indices
+
+
+ma <- function(x, n = 5){stats::filter(x, rep(1 / n, n), sides = 2)}
+
+### Trading Strategy Params
+
+strat.rules <- list()
+
+strat.rules[["cl"]] <- list(Threshold = 0.015,
+                            HoldingPeriod = 1, 
+                            Direction = c("sell", "buy"), 
+                            p = 10, q = 10, d = 2)
+
+strat.rules[["sc"]] <- list(Threshold = 0.01, 
+                            HoldingPeriod = 4,
+                            Direction = c("sell", "buy"),
+                            p = 4, q = 1, d = 0)
+
+strat.rules[["rb"]] <- list(Threshold = 0.015, 
+                            HoldingPeriod = 3,
+                            Direction = c("sell", "buy"),
+                            p = 4, q = 1, d = 1.5)
+
+date.start <- "2019-1-1"
+
+```
+
+Sidebar {.sidebar}
+=====================================
+
+```{r input_layout}
+
+  strategy.Choice <- c("Gasoline" = "rb",
+                      "WTI" = "cl",
+                      "Brent" = "sc")
+
+  selectInput("cmdty",
+              "Investment Commodity",
+             choices = strategy.Choice, 
+             selected = "WTI")
+ 
+  index.Choice <- c("DJ US ENERGY" = "DSEN",
+                    "DJ US OIL&GAS" = "DSOG",
+                    "DJ US OILEQPSRV" = "DSOI",
+                    "DJ US INTGOILGAS" = "DSOL",
+                    "DJ US OILEQPSRV" = "DSOQ",
+                    "Crude Oil Brent NYMEX" = "OILBR",
+                    "Crude Oil Light Sweet NYMEX" = "OILSW",
+                    "CBOE/NYMEX WTI Volatility Index" = "OIV",
+                    "S&P GSCI Crude Oil Index" = "SG3I",
+                    "S&P GSCI Crude Oil Index Total Return" = "SG4A",
+                    "S&P 500 EQUAL WEIGHTED Energy [Sector]" = "SS1J")
+
+  selectInput("benchmark",
+              "Benchmark Index",
+             choices = index.Choice,
+             selected = "MSCI")
+                     
+  dateRangeInput("dateRange",
+               "Simulation Period",
+               start = "2019-01-01",
+               end   = Sys.Date())
+  
+  actionButton("go", "Simulate")
+  
+  start.date <- eventReactive(input$go,{
+    start.date <- format(input$dateRange[1])  
+  })
+  
+  end.date <- eventReactive(input$go,{
+    end.date <- format(input$dateRange[2])  
+  })
+  
+  commodity <- eventReactive(input$go, {
+    
+    commodity <- as.data.table(commodites[[input$cmdty]])
+    commodity[, 
+              Date := nymex_date][, 
+                                  nymex_date := NULL]
+    
+    commodity
+  })
+  
+  benchmark <- eventReactive(input$go, {
+    benchmark <- as.data.table(indices[[input$benchmark]])
+  })
+  
+  positions <- eventReactive(input$go, {
+    
+    baseline <- commodity()
+    
+    strategy <- strat.rules[[input$cmdty]]
+    
+    train.data <- baseline[Date < date.start]
+    test.data <- baseline[Date >= start.date() & Date <= end.date()]
+    test.data[, index := .I]
+    
+    train.model <- auto.arima(train.data$return, 
+                              max.p = strategy$p, 
+                              max.q = strategy$q,
+                              d = strategy$d,
+                              ic = "bic")
+    
+    test.model <- Arima(test.data$return, model = train.model)
+
+    test.data$pred <- fitted(test.model)
+    
+    enter <- test.data[pred < -strategy$Threshold | pred > strategy$Threshold]
+    
+    enter$exit <- enter$index + strategy$HoldingPeriod
+    
+    enter <- enter[exit < max(test.data$index)]
+    
+    enter$side <- ifelse(as.numeric(enter$pred) >= 0,
+                         strategy$Direction[1],
+                         strategy$Direction[2])
+
+    exit <- test.data[index %in% enter$exit]
+    exit$exit <- 0
+    exit$side <- ifelse(enter$side == "buy", "sell", "buy")
+
+    combined <- merge(enter, exit, by.x = c("exit"), by.y = c("index"))
+    
+    transactions <- combined[, .(Position = .I,
+                  Direction = ifelse(side.x == "buy", "Long", "Short"),
+                  EnterDate = Date.x,
+                  EnterPrice = spotPrice.x, 
+                  ExitDate = Date.y,
+                  ExitPrice = spotPrice.y)]
+    
+    transactions[, ProfitLoss := ifelse(Direction == "Long", 
+                                        ExitPrice - EnterPrice, EnterPrice - ExitPrice)]
+    transactions[, Return := ifelse(Direction == "Long", 
+                                    (ExitPrice - EnterPrice)/ExitPrice, (EnterPrice - ExitPrice)/EnterPrice)]
+    
+    positions <- transactions
+  })
+  
+  holdings <- eventReactive(input$go, {
+    
+    period <- commodity()
+    current.pos <- positions()
+    
+    dates <- period[Date >= start.date()]$Date
+    
+    results <- list()
+    
+    for( index in 1:nrow(current.pos) ) {
+  
+      pos <- current.pos[index,]
+      
+      holding <- data.table( Date = dates, Price = 0 )
+      
+      open.dates <- holding[Date >= pos$EnterDate][Date <= pos$ExitDate]$Date
+      
+      holding[Date %in% open.dates]$Price <- pos$EnterPrice
+  
+      holding$Direction <- pos$Direction
+      holding$PnL <- pos$ProfitLoss
+      holding[Price == 0]$Price <- NA
+      
+      results[[index]] <- holding
+    }
+
+    holdings <- results
+  })
+  
+  description <- eventReactive(input$go, {
+    description <- data.symbology[data.symbology$Symbol == toupper(input$cmdty),]$Description
+  })
+  
+  performance.metrics <- eventReactive(input$go, {
+      metrics <- data.table( Metric = character(0), 
+                             Commodity = numeric(0), 
+                             Strategy = numeric(0),
+                             Benchmark = numeric(0))
+      
+      metrics <- rbind(metrics, data.table( Metric = c("Periodic Return"), 
+                                            Commodity = commodity.return(), 
+                                            Strategy = strategy.return(),
+                                            Benchmark = benchmark.return()))
+      
+      metrics <- rbind(metrics, data.table( Metric = c("Annualized Return"), 
+                                      Commodity = ( commodity.return() ^ 1/9 ) * 12, 
+                                      Strategy = ( strategy.return() ^ 1/9 ) * 12,
+                                      Benchmark = ( benchmark.return() ^ 1/9 ) * 12))
+      
+      performance.metrics <- metrics
+  })
+  
+  strategy.return <- eventReactive(input$go, {
+    
+    period <- positions()
+    
+    ret <- (cumprod(1 + period$Return) - 1)[nrow(period)] * 100
+    
+    strategy.return <- ret
+  })
+  
+  strategy.vol <- eventReactive(input$go, {
+    
+    period <- positions()
+    
+    vol <- sd(period$Return) * 100
+    
+    strategy.return <- vol
+  })
+    
+  commodity.return <- eventReactive(input$go, {
+    
+    period <- commodity()[Date >= start.date() & Date <= end.date()]
+    
+    ret <- (cumprod(1 + period$return) - 1)[nrow(period)] * 100
+    
+    commodity.return <- ret
+  })
+  
+  commodity.vol <- eventReactive(input$go, {
+    
+    period <- commodity()[Date >= start.date() & Date <= end.date()]
+    
+    vol <- sd(period$return) * 100
+    
+    commodity.vol <- vol
+  })
+
+  benchmark.return <- eventReactive(input$go, {
+    
+    period <- benchmark()[date >= start.date() & date <= end.date()]
+    
+    ret <- (cumprod(1 + period$return) - 1)[nrow(period)] * 100
+    
+    benchmark.return <- ret
+  })
+  
+  benchmark.vol <- eventReactive(input$go, {
+    
+    period <- benchmark()[date >= start.date() & date <= end.date()]
+    
+    vol <- sd(period$return) * 100
+    
+    benchmark.return <- vol
+  })
+
+  strategy.garch <- eventReactive(input$go, {
+    baseline <- commodity()
+    
+    strategy <- strat.rules[[input$cmdty]]
+    
+    test.data <- baseline[Date >= start.date() & Date <= end.date()][, .(Date, return)]
+    
+    arma.garch.norm = ugarchspec(mean.model=list(armaOrder=c(1,0)),
+                             variance.model=list(garchOrder=c(1,1)))
+
+    series <- as.xts.data.table(test.data)
+    
+    strategy.garch <- ugarchfit(data=series, spec=arma.garch.norm)
+  })
+  
+  chosen_strategy <- eventReactive(input$go, {
+    names(strategy[strategy == input$strategy])
+  })
+
+```
+
+Market Activity
+=====================================  
+
+Row {data-height=600, .tabset}
+-------------------------------------
+
+### Strategy
+
+```{r}
+
+renderPlotly({
+  
+  data <- commodity()[Date >= start.date() & Date <= end.date()]
+  
+  start_date <- as.Date(min(data$Date))
+  end_date <- as.Date(max(data$Date))
+  
+  bbands <- data.frame(BBands(data[,c("high","low", "close")]))[, 1:3]
+  
+  data <- cbind(data, bbands)
+  
+  data$mavg <- ma(data$close)
+  data$direction <- ifelse(data$close >= data$open, "Increasing", "Decreasing")
+  
+  i <- list(line = list(color = '#17BECF'))
+  d <- list(line = list(color = '#7F7F7F'))
+
+  p <- data %>% 
+    plot_ly(x = ~Date, type = "candlestick",
+            open = ~open, close = ~spotPrice,
+            high = ~high, low = ~low,
+            text = description(),
+            name = description(),
+            opacity = 0.5,
+            showlegend = T,
+            increasing = i, decreasing = d) %>%
+    add_lines(x = ~Date, y = ~mavg, name = "Mv Avg",
+            line = list(color = '#E377C2', width = 0.5),
+            hoverinfo = "none", inherit = F,
+            opacity = 1) %>%
+    add_lines(x = ~Date, y = ~dn, name = "B Bands",
+          line = list(color = '#ccc', width = 0.5),
+          legendgroup = "Bollinger Bands", inherit = F,
+          showlegend = T, hoverinfo = "none",
+          opacity = 1) %>%
+    layout(yaxis = list(title = "Price"))
+  
+  for(i in 1:length(holdings())){
+    h <- holdings()[[i]]
+    
+    p <- add_lines(p, x = h$Date, y = h$Price,
+                   linetype = h$Direction,
+                   line = list(color = ifelse(h[1]$PnL >= 0, "darkgreen", "darkred"), width = 2), 
+                   text = paste("Profit / Loss: ", round(h[1]$PnL, 2)), 
+                   inheret = F,
+                   opacity = 1,
+                   name = h$Position,
+                   showlegend = T)
+  }
+  
+  pv <-
+    data %>%
+     plot_ly(x=~Date, y=~volume, type='bar', name = "Volume",
+          color = ~direction, colors = c('#17BECF','#7F7F7F')) %>%
+      layout(yaxis = list(title = "Volume"))
+  
+  
+  pp <- subplot(p, pv, heights = c(0.7,0.2), nrows = 2,
+                shareX = TRUE, titleY = TRUE) %>%
+    layout(title = paste( description(), " Trading Strategy ", format(start_date, "%b %d %Y"), "-", format(end_date, "%b %d %Y")),
+           xaxis = list(rangeslider = list(visible = F)),
+           legend = list(orientation = 'v', x = -0.1, y = .5,
+                         xanchor = 'center', yref = 'paper',
+                         font = list(size = 10),
+                         bgcolor = 'transparent'))
+  pp
+})
+
+```
+
+    
+### Underlying Commodity
+
+```{r}
+
+renderPlotly({
+  
+  data <- commodity()
+  
+  start_date <- as.Date(min(data$Date))
+  end_date <- as.Date(max(data$Date))
+  
+  p <- data %>% 
+    plot_ly(x = ~Date, type = "candlestick",
+            open = ~open, close = ~spotPrice,
+            high = ~high, low = ~low)
+  
+  p
+  
+  rs <- list(visible = TRUE, x = 0.5, y = -0.055,
+             xanchor = 'center', yref = 'paper',
+             font = list(size = 9),
+             buttons = list(
+               list(count=1,
+                    label='RESET',
+                    step='all'),
+               list(count=1,
+                    label='1 YR',
+                    step='year',
+                    stepmode='backward'),
+               list(count=3,
+                    label='3 MO',
+                    step='month',
+                    stepmode='backward'),
+               list(count=1,
+                    label='1 MO',
+                    step='month',
+                    stepmode='backward')
+             ))
+  
+  pp <- subplot(p, heights = c(1), nrows=1,
+                shareX = TRUE, titleY = TRUE) %>%
+    layout(title = paste( description(), format(start_date, "%b %d %Y"), "-", format(end_date, "%b %d %Y")),
+           xaxis = list(rangeselector = rs),
+           legend = list(orientation = 'h', x = 0.5, y = 1,
+                         xanchor = 'center', yref = 'paper',
+                         font = list(size = 10),
+                         bgcolor = 'transparent'))
+  pp
+})
+
+```
+
+### Benchmark
+
+```{r}
+
+renderHighchart({
+  
+  hchart(benchmark(), "line", hcaes(x = date, y = close))
+  
+})
+
+```
+
+Row {data-height=400, .tabset}
+-------------------------------------
+
+### Performance
+
+```{r}
+renderDataTable({
+  performance.metrics()
+}, options = list(searching = FALSE, lengthChange = FALSE, paging = FALSE))
+
+```
+
+### Positions
+
+```{r}
+renderDataTable({
+  positions()
+}, options = list(searching = FALSE, lengthChange = FALSE, pageLength = 5))
+
+```
+
+### Volatility
+
+```{r}
+renderPlot({
+  plot(strategy.garch(), which=3)
+})
+
+```
+
+### Value-at-Risk
+
+```{r}
+renderPlot({
+  plot(strategy.garch(), which=2)
+})
+
+```

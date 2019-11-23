@@ -11,19 +11,24 @@ library(formattable)
 theme_set(theme_light())
 
 # Theme Overrides
-theme_update(plot.title = element_text(hjust = 0.5),
-             axis.text.x = element_text(size = 10),
+theme_update(axis.text.x = element_text(size = 10),
              axis.text.y = element_text(size = 10),
+             plot.title = element_text(hjust = 0.5, size = 16, face = "bold", color = "darkgreen"),
              axis.title = element_text(face = "bold", size = 12, colour = "steelblue4"),
-             legend.position = "top", legend.title = element_blank())
+             plot.subtitle = element_text(face = "bold", size = 8, colour = "darkred"),
+             legend.title = element_text(size = 12, color = "darkred", face = "bold"),
+             legend.position = "right", legend.title.align=0.5,
+             panel.border = element_rect(linetype = "solid", 
+                                         colour = "lightgray"), 
+             plot.margin = unit(c( 0.1, 0.1, 0.1, 0.1), "inches"))
 
-path.data <- "D:/Projects/MSDS-Unsupervised-Learning/datasets"
+path.data <- "D:/Projects/MSDS-Unsupervised-Learning/datasets/"
 setwd(path.data)
 
 # Load Stock Data
 
-stock.data <- read_excel("stockdata.xlsx",
-                          col_types = c("date", rep("numeric", 42)))
+stock.data <- read_excel(paste0(path.data, "stockdata.xlsx"),
+                         col_types = c("date", rep("numeric", 42)))
 
 head(stock.data)
 str(stock.data)
@@ -127,7 +132,7 @@ colnames(pc.1.long) <- c("Symbol", "PC1")
 pc.2.long <- data.table(melt(pc.2), keep.rownames = T)
 colnames(pc.2.long) <- c("Symbol", "PC2")
 
-symbol.info <- merge(symbol.info, pc.1.long, by = c("Symbol"))
+symbol.info <- merge(symbol.info, pc.1.long, by = c("Symbol"))s
 symbol.info <- merge(symbol.info, pc.2.long, by = c("Symbol"))
 
 # Plot PCA by Symbol, colored by Industry
@@ -326,7 +331,7 @@ model.scores$test <- round(model.scores$test, 4)
 
 formattable(model.scores, align = c("l", "c", "c", "c", "c", "r"),
             list(`Indicator Name` = formatter("span", style = ~style(color = "grey", font.weight = "bold"))
-))
+            ))
 
 full.lm <- lm(VV ~ ., data=train.scores);
 summary(full.lm)

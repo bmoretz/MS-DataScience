@@ -1,0 +1,425 @@
+---
+title: ''
+mainfont: Arial
+fontsize: 12pt
+documentclass: report
+header-includes:
+- \PassOptionsToPackage{table}{xcolor}
+- \usepackage{caption}
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \usepackage[table]{xcolor}
+- \usepackage{fancyhdr}
+- \usepackage{boldline}
+- \usepackage{tipa}
+   \definecolor{headergrey}{HTML}{545454}
+   \definecolor{msdblue}{HTML}{1C93D1}
+   \pagestyle{fancy}
+   \setlength\headheight{30pt}
+   \rhead{\color{headergrey}\today}
+   \fancyhead[L]{\color{headergrey}Moretz, Brandon}
+   \fancyhead[C]{\Large\bfseries\color{headergrey}Black Monday}
+   \rfoot{\color{headergrey}Module 6}
+   \lfoot{\color{headergrey}MSDS 451}
+   \fancyfoot[C]{\rmfamily\color{headergrey}Financial and Risk Analytics}
+geometry: left = 1cm, right = 1cm, top = 2cm, bottom = 3cm
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document:
+    fig_caption: yes
+    latex_engine: xelatex
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r knitr_setup, include = FALSE}
+
+# DO NOT ADD OR REVISE CODE HERE
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, dev = 'png')
+options(knitr.table.format = "latex")
+
+```
+
+```{r report_setup, message = FALSE, warning = FALSE, include = FALSE}
+
+library(data.table, quietly = TRUE, warn.conflicts = FALSE)
+
+assignInNamespace("cedta.pkgEvalsUserCode", c(data.table:::cedta.pkgEvalsUserCode, "rtvs"), "data.table")
+
+library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggrepel, quietly = TRUE, warn.conflicts = FALSE)
+library(ggthemes, quietly = TRUE, warn.conflicts = FALSE)
+library(knitr, quietly = TRUE, warn.conflicts = FALSE)
+library(kableExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(Rblpapi, quietly = TRUE, warn.conflicts = FALSE)
+library(scales, quietly = TRUE, warn.conflicts = FALSE)
+library(pander, quietly = TRUE, warn.conflicts = FALSE)
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(formattable, quietly = TRUE, warn.conflicts = FALSE)
+library(grid, quietly = TRUE, warn.conflicts = FALSE)
+library(gridExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(png, quietly = TRUE, warn.conflicts = FALSE)
+library(extrafont, quietly = TRUE, warn.conflicts = FALSE)
+library(tinytex, quietly = TRUE, warn.conflicts = FALSE)
+library(stringr, quietly = TRUE, warn.conflicts = FALSE)
+library(lubridate, quietly = TRUE, warn.conflicts = FALSE)
+library(reshape2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggrepel, quietly = TRUE, warn.conflicts = FALSE)
+library(mnormt, quietly = TRUE, warn.conflicts = FALSE)
+library(Ecdat, quietly = TRUE, warn.conflicts = FALSE)
+library(MASS, quietly = TRUE, warn.conflicts = FALSE)
+library(copula, quietly = TRUE, warn.conflicts = FALSE)
+library(fGarch, quietly = TRUE, warn.conflicts = FALSE)
+library(forecast, quietly = TRUE, warn.conflicts = FALSE)
+library(tseries, quietly = TRUE, warn.conflicts = FALSE)
+library(gmodels, quietly = TRUE, warn.conflicts = FALSE)
+library(rugarch, quietly = TRUE, warn.conflicts = FALSE)
+
+options(tinytex.verbose = TRUE)
+suppressMessages(library("tidyverse"))
+
+pretty_kable <- function(data, title, dig = 2) {
+  kable(data, caption = title, digits = dig) %>%
+    kable_styling(bootstrap_options = c("striped", "hover")) %>%
+      kableExtra::kable_styling(latex_options = "hold_position")
+}
+
+theme_set(theme_light())
+
+# Theme Overrides
+theme_update(axis.text.x = element_text(size = 10),
+             axis.text.y = element_text(size = 10),
+             plot.title = element_text(hjust = 0.5, size = 16, face = "bold", color = "darkgreen"),
+             axis.title = element_text(face = "bold", size = 12, colour = "steelblue4"),
+             plot.subtitle = element_text(face = "bold", size = 8, colour = "darkred"),
+             legend.title = element_text(size = 12, color = "darkred", face = "bold"),
+             legend.position = "right", legend.title.align=0.5,
+             panel.border = element_rect(linetype = "solid", 
+                                         colour = "lightgray"), 
+             plot.margin = unit(c( 0.1, 0.1, 0.1, 0.1), "inches"))
+
+data.dir <- "D:/Projects/MSDS-RiskAnalytics/datasets/"
+
+```
+
+```{r pander_setup, include = FALSE}
+
+knitr::opts_chunk$set(comment = NA)
+
+panderOptions('table.alignment.default', function(df)
+    ifelse(sapply(df, is.numeric), 'right', 'left'))
+panderOptions('table.split.table', Inf)
+panderOptions('big.mark', ",")
+panderOptions('keep.trailing.zeros', TRUE)
+
+```
+
+### Problem Background
+
+On Black Monday, the return on the S&P500 was _-22.8%_.
+
+In this lab we are going to look at GARCH models and how they relate to predicting extreme events in financial markets. 
+
+```{r, SP500_data, echo = T, fig.height = 4}
+
+data(SP500, package = "Ecdat")
+
+ret.blm <- SP500$r500[1805] # Black Monday is the 1805 obs.
+x <- SP500$r500[(1804 - 2*253+1 ): 1804]
+returns <- data.table(ret = c(x, ret.blm))[, x := .I]
+
+suppressWarnings({
+   p1 <- ggplot(returns, aes( x = x)) +
+      geom_line(aes(x = x, y = ifelse( x < 505, ret, NA))) +
+      geom_line(aes(x = x, y = ifelse( x >= 505, ret, NA)), col = "darkred") +
+      labs(title = "SP500 Returns", x = "index", y = "return")
+   
+   p2 <- ggplot(returns, aes(ret, y = ..density..)) +
+      geom_histogram(aes(fill = ..count..), bins = 50) +
+      geom_density(aes(y = ..density..), col = "darkred", lwd = 1)
+
+   grid.arrange(p1, p2, nrow = 2)
+})
+
+```
+
+Now, we fit the GARCH model.
+
+Below, we will fit a AR(1) + GARCH(1, 1) model for the data 2 years prior to Black Monday (assuming 253 trading days/year).
+
+```{r, GARCH_model, echo = T}
+
+
+spec <- ugarchspec( mean.model = list( armaOrder = c(1, 0) ),
+                    variance.model = list( garchOrder = c(1, 1)),
+                    distribution.model = "std")
+
+fit <- ugarchfit(data = x, spec = spec)
+
+dfhat <- coef(fit)[6]
+
+forecast <- ugarchforecast(fit, data = x, n.ahead = 1)
+forecast
+
+```
+
+The parameter estimates for the model are below:
+
+
+```{r, GARCH_model_params, echo = F}
+
+p.vals <- as.data.frame(matrix(coef(fit), 1, 6, byrow = T))
+colnames(p.vals) <- names(coef(fit))
+
+pretty_kable(p.vals, "Parameter Estimates", dig = 6)
+
+```
+
+\newpage
+
+### Problem 1.)
+######  What is the conditional probability of a return less than or equal to -0.228 on Black Monday?
+
+```{r, BlackMonday_prob, echo = T}
+
+ret.pred <- fitted(forecast)
+ret.sd <- sigma(forecast)
+
+scale <- ret.sd * sqrt((dfhat-2)/dfhat)
+
+z_score <- as.numeric( ( ret.blm - ret.pred) / scale )
+
+bm.prob <- pt(z_score, dfhat, lower.tail = T)
+
+```
+
+
+The probability of a return less than or equal to that of Black Monday is: `r format(bm.prob, scientific = F)`
+
+
+### Problem 2.)
+######  Model Diagnostics
+
+Compute and plot the standardized residuals. Also, plot the ACF of the standardized residuals and their squares.
+
+```{r, Model_diag, echo = T}
+
+plot_residuals <- function(res, sd, mname) {
+   
+   residual <- data.table(
+      std = res / sd)[, 
+        res_sq := std*std][, 
+                           index := .I]
+   
+   p1 <- ggplot(residual, aes(x = index, y = std)) +
+      geom_point() +
+      labs(title = "SR")
+   
+   p2 <- ggAcf(residual$std) +
+      labs(title = "SR / ACF")
+   
+   p3 <- ggAcf(residual$res_sq) +
+      labs(title = "SR^2 / ACF")
+   
+   grid.arrange(p1, p2, p3, nrow = 1, top = mname)
+}
+
+plot_residuals(forecast@model$modeldata$residuals, 
+               forecast@model$modeldata$sigma,
+               "AR(1) + GARCH(1)")
+
+```
+
+###### Does the model fit adequately?
+
+In the residual plot above, we see what appears to be white noise for the residual plots. Neither of the ACF plots display significant residual auto-correlation, so we would say this model fits reasonably well outside of a few points (specifically at lag 14 in the SR ACF). The SR^2 plot shows no significant autocorrelations, and we would conclude this model is of adequate fit.
+
+### Problem 3.)
+###### AR(1) + ARCH(1)
+
+Would an AR(1) + ARCH(1) model provide an adequate fit?
+
+```{r, ARARCH_model, echo = T}
+
+spec2 <- ugarchspec( mean.model = list( armaOrder = c(1, 0) ),
+                    variance.model = list( garchOrder = c(1, 0)),
+                    distribution.model = "std")
+
+fit2 <- ugarchfit(data = x, spec = spec2)
+
+plot_residuals(as.vector(residuals(fit2)), 
+               as.vector(sigma(fit2)),
+               "AR(1) + ARCH(1)")
+
+```
+
+The residual diagnostics for the AR(1) + ARCH(1) are close to the AR(1) + GARCH(1), however, in the SR^2 plot we start to see pronounced autocorrelations at lag 2, which is concerning.
+
+```{r, model-compare, echo = T}
+
+ic.data <- as.data.table(cbind(infocriteria(fit), infocriteria(fit2)), 
+                         keep.rownames = T)[, 
+                                            D := V1 - V2]
+colnames(ic.data) <- c("Information Criterion", "fit1", "fit2", "Delta")
+
+pretty_kable(ic.data, "Model Fit Comparison", dig = 4)
+
+```
+
+If we compare the information criterion for the model fits, we see that the AR(1) + GARCH(1) has lower AIC, but the AR(1) + ARCH(1) has a lower BIC.
+
+Depending on the IC, we would choose different models, however, the differences are rather small.
+
+\newpage
+
+### Problem 4.)
+###### Does an AR(1) model with a Gaussian conditional distribution prove an adequate fit?
+
+
+```{r, AR_CGAUSS_model, fig.height=3.5, echo = T}
+
+
+fit3 <- arima( x, order = c(1, 0, 0))
+
+suppressMessages({
+   plot_residuals(fit3$residuals, 
+            fit3$sigma2,
+            "AR(1)")
+})
+
+# normalize AIC/BIC to compare to previous models
+pretty_kable(data.table(AIC = AIC(fit3) / fit3$nobs,
+                      BIC = BIC(fit3) / fit3$nobs), "Information Criteron AR(1)", dig = 4)
+
+```
+
+Looking at the residual plots, we see similar characteristics of the previous models. There is some volatility clustering and the pronouced lags at 14 in the SR and 2 in the SR^2, and in general the lags are more pronounced in the Gaussian model. The information criterion is quite a bit higher in both AIC and BIC. I would say this model is not fully adequate, and would strongly prefer either of the two previous models.
+
+```{r, GAUSS_model_qq, fig.height=3, echo = F}
+
+   ggplot(data.table(res = as.vector(fit3$residuals / fit3$sigma2)), aes(sample = res)) +
+      geom_qq(lwd = .5) +
+      geom_qq_line() +
+      scale_x_continuous()
+
+```
+
+Moreover, since the errors are assumed Gaussian, we can use the normal plot of the residuals to show the extremely poor fit of the standardized residuals at the tails.
+
+\newpage
+
+### Problem 5.)
+
+The conditional variance of an AR(1) + GARCH(1, 1) process is:
+
+$Y_t - \mu = \phi(Y_{t - 1} - \mu) + a_t$
+
+$a_t = \sigma_t\epsilon_t$
+
+is
+
+$\sigma_t^2 = \omega + \alpha a_{t - 1}^2 + \beta\sigma_{t -  1}^2$
+
+Where $\mu, \phi, \omega, \alpha, \beta$ are constant parameters.\newline 
+
+a.) What is $\mathbb{E}[Y_t - \mu]$ ?
+
+\setlength{\leftskip}{2cm}
+
+$\mathbb{E}[Y_t - \mu] = \mathbb{E}[\phi(Y_{t - 1} - \mu) + a_t]$,
+
+$\ldots{}=\phi\mathbb{E}[Y_{t - 1}-\mu] + \mathbb{E}[a_t]$,
+
+From __12.6__, we know that $\mathbb{E}[Y_t] = \mu~~\forall t$ and from __12.3__, $\mu = 0 ~~\forall t$, so that:
+
+$\ldots{} = \phi(0) + \mathbb{E}[\sigma_t\epsilon_t]$,
+
+$\ldots{} = \sigma_t\mathbb{E}[\epsilon_t]$,
+
+From __14.3__ we know $\epsilon_t$ is i.i.d, so that $\mathbb{E}[\epsilon_t] = 0$
+
+$\ldots{} = 0$\newline
+
+\setlength{\leftskip}{0pt}
+
+b.) What is $\mathbb{E}[\epsilon_t]$ ?
+
+\setlength{\leftskip}{2cm}
+
+From __14.3__ we know $\epsilon_t$ is i.i.d, or $\mathbb{E}(\epsilon_t | \epsilon_{t-1},\ldots) = 0$, so that $\mathbb{E}[\epsilon_t] = 0$
+
+\setlength{\leftskip}{0pt}
+
+c.) What is $\mathbb{E}[\epsilon_t^2]$ ?
+
+\setlength{\leftskip}{2cm}
+
+From __14.3__ we know $\mathbb{V}(\epsilon_t|\epsilon_{t-1}, \ldots) = 1$, or $\mathbb{V}(\epsilon_t) = 1$, because $\epsilon$ is i.i.d.
+
+Hence, $\mathbb{V}[X] = \mathbb{E}[X - \mu]^2 = \mathbb{E}[X^2] - \mu^2$
+
+$\mathbb{V}[\epsilon_t] = \mathbb{E}[\epsilon_t^2] - \{\mathbb{E}[\epsilon_t]\}^2$
+
+$\mathbb{E}[\epsilon_t^2] = \mathbb{V}(\epsilon_t) + \{\mathbb{E}[\epsilon_t]\}^2$
+
+$\{\mathbb{E}[\epsilon_t]\}^2$ = 0,
+
+So,
+
+$\mathbb{E}(\epsilon_t^2) = \mathbb{V}(\epsilon_t) = 1$\newline
+
+\setlength{\leftskip}{0pt}
+
+d.) What is $\mathbb{E}[\epsilon_t\epsilon_{t-1}]$ ?
+
+\setlength{\leftskip}{2cm}
+
+$Cov(\epsilon_t, \epsilon_{t-1}) = \mathbb{E}[\epsilon_t\epsilon_{t-1}] - \mathbb{E}[\epsilon_t]\mathbb{E}[\epsilon_{t-1}]$
+
+$Cov(\epsilon_t, \epsilon_{t-1}) = 0$, by independence of $\epsilon$.
+
+$\mathbb{E}[\epsilon_t] = \mathbb{E}[\epsilon_{t-1}] = 0$ from __b.__,
+
+$\mathbb{E}[\epsilon_t\epsilon_{t-1}]= Cov(\epsilon_t, \epsilon_{t-1}) + \mathbb{E}[\epsilon_t]\mathbb{E}[\epsilon_{t-1}] = 0$\newline
+
+\setlength{\leftskip}{0pt}
+
+e.) What is the _unconditional_ variance of the process?
+
+\setlength{\leftskip}{2cm}
+
+$\mathbb{E}[\sigma_t^2] = \mathbb{E}[\omega + \alpha^2_{t-1} + \beta^2_{t-1}]$
+
+$\gamma_a(0) = \omega + \alpha\gamma_0 + \beta\gamma_0$
+
+$\gamma_a(0)[1 - \alpha - \beta] = \omega$
+
+$\gamma_a(0) = \frac{\omega}{1 - \alpha - \beta}$
+
+\setlength{\leftskip}{0pt}
+
+f.) Show that this correctly reduces to Ruppert Eq. 12.8 for unconditional variance of an AR(1) process.
+
+\setlength{\leftskip}{2cm}
+
+$Cov(Y_y,Y_{t+h}) = \phi^{|h|}\frac{\sigma^2_\epsilon}{1 - \phi^2}$
+
+$\ldots = Cov(Y_y,Y_{t+h}) = \frac{\phi^{|h|}\gamma_\alpha(0)}{1 - \phi^2}$
+
+From __e__, $\gamma_a(0) = \frac{\omega}{1 - \alpha - \beta}$
+
+$\ldots = Cov(Y_y,Y_{t+h}) = \frac{\phi^{|h|}[\frac{\omega}{1 - \alpha - \beta}]}{1 - \phi^2}$
+
+\setlength{\leftskip}{0pt}

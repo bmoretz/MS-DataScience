@@ -1,0 +1,329 @@
+---
+title: ''
+mainfont: Arial
+fontsize: 12pt
+documentclass: report
+header-includes:
+- \PassOptionsToPackage{table}{xcolor}
+- \usepackage{caption}
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \usepackage[table]{xcolor}
+- \usepackage{fancyhdr}
+- \usepackage{boldline}
+- \usepackage{tipa}
+   \definecolor{headergrey}{HTML}{545454}
+   \definecolor{msdblue}{HTML}{1C93D1}
+   \pagestyle{fancy}
+   \setlength\headheight{30pt}
+   \rhead{\color{headergrey}\today}
+   \fancyhead[L]{\color{headergrey}Moretz, Brandon}
+   \fancyhead[C]{\Large\bfseries\color{headergrey} Stock Returns and Lognormal Distributions}
+   \rfoot{\color{headergrey}Module 2}
+   \lfoot{\color{headergrey}MSDS 451}
+   \fancyfoot[C]{\rmfamily\color{headergrey}Financial and Risk Analytics}
+geometry: left = 1cm, right = 1cm, top = 2cm, bottom = 3cm
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document:
+    fig_caption: yes
+    latex_engine: xelatex
+  html_document:
+    df_print: paged
+---
+
+
+```{r knitr_setup, include = FALSE}
+
+# DO NOT ADD OR REVISE CODE HERE
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, dev = 'png')
+options(knitr.table.format = "latex")
+
+```
+
+```{r report_setup, message = FALSE, warning = FALSE, include = FALSE}
+
+library(data.table, quietly = TRUE, warn.conflicts = FALSE)
+
+assignInNamespace("cedta.pkgEvalsUserCode", c(data.table:::cedta.pkgEvalsUserCode, "rtvs"), "data.table")
+
+library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggrepel, quietly = TRUE, warn.conflicts = FALSE)
+library(ggthemes, quietly = TRUE, warn.conflicts = FALSE)
+library(knitr, quietly = TRUE, warn.conflicts = FALSE)
+library(kableExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(Rblpapi, quietly = TRUE, warn.conflicts = FALSE)
+library(scales, quietly = TRUE, warn.conflicts = FALSE)
+library(pander, quietly = TRUE, warn.conflicts = FALSE)
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(formattable, quietly = TRUE, warn.conflicts = FALSE)
+library(grid, quietly = TRUE, warn.conflicts = FALSE)
+library(gridExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(png, quietly = TRUE, warn.conflicts = FALSE)
+library(extrafont, quietly = TRUE, warn.conflicts = FALSE)
+library(tinytex, quietly = TRUE, warn.conflicts = FALSE)
+library(stringr, quietly = TRUE, warn.conflicts = FALSE)
+library(lubridate, quietly = TRUE, warn.conflicts = FALSE)
+library(reshape2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggrepel, quietly = TRUE, warn.conflicts = FALSE)
+
+options(tinytex.verbose = TRUE)
+suppressMessages(library("tidyverse"))
+
+pretty_kable <- function(data, title, dig = 2) {
+  kable(data, caption = title, digits = dig) %>%
+    kable_styling(bootstrap_options = c("striped", "hover"))
+}
+
+theme_set(theme_light())
+
+# Theme Overrides
+theme_update(plot.title = element_text(hjust = 0.5),
+             axis.text.x = element_text(size = 10),
+             axis.text.y = element_text(size = 10),
+             axis.title = element_text(face = "bold", size = 12, colour = "steelblue4"),
+             legend.position = "top", legend.title = element_blank())
+
+```
+
+```{r pander_setup, include = FALSE}
+
+panderOptions('table.alignment.default', function(df)
+    ifelse(sapply(df, is.numeric), 'right', 'left'))
+panderOptions('table.split.table', Inf)
+panderOptions('big.mark', ",")
+panderOptions('keep.trailing.zeros', TRUE)
+
+```
+
+### Problem 1
+######  Assume that a stock's log returns at any time scale have normal distribution. 
+
++ Suppose that its average annual log return is 100%, and its annual standard deviation ("volatility") of log returns is 200%. 
+
+What are its average (mu) and standard deviation (sigma) of daily log returns, assuming a year has 250 trading days? 
+
+```{r, prob1, echo = T}
+
+trading.days <- 250
+
+annual.ret <- 1
+annual.vol <- 2
+
+mu <- annual.ret / trading.days
+sigma <- annual.vol / sqrt(trading.days)
+
+prob1 <- list(mu = round(mu, 5), sigma = round(sigma, 5))
+
+```
+
+_Average:_ __`r prob1$mu`__
+
+_Standard Deviation:_ __`r prob1$sigma`__
+
+### Problem 2
+######  Simulate 250 instances of the daily log returns described in 1.) with random seed __set.seed(2015)__. 
+
++ Compute the net returns of these instances, and compute their average and standard deviation.
+
+```{r, prob2, echo = T}
+
+set.seed(2015)
+
+logRet <- rnorm(250, mu, sigma)
+netRet <- exp(logRet) - 1
+
+m <- round(mean(netRet), 5)
+s <- round(sd(netRet), 5)
+  
+```
+
+
+_Average Net Return:_ __`r format(m, scientific = F)`__
+
+_Standard Deviation of Net Returns:_ __`r format(s, scientific = F)`__
+
+_Are the average (m) and standard deviation (s) of net returns same as the average and standard deviation of log returns computed in 1.)?_
+
+__Answer:__ While not identical, they are close enough for practical purposes.
+
+```{r, prob2_logret, echo = F}
+
+p1 <- ggplot(data.table(ret = logRet), aes(ret)) +
+  geom_histogram(aes(fill = ..count..), bins = 25) +
+  ggtitle("Log Returns Distribution") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+p2 <- ggplot(data.table(ret = netRet), aes(ret)) +
+  geom_histogram(aes(fill = ..count..), bins = 25) +
+  ggtitle("Net Returns Distribution") +
+  theme(plot.title = element_text(hjust = 0.5))
+  
+grid.arrange(p1, p2, nrow = 2)
+
+```
+
+### Problem 3
+
++ Compute the quantity $m-\frac{s^2}{2}$.
+
+```{r, prob3_a, echo = T}
+
+prob3.a <- round(m - s^2/2, 5)
+
+```
+
++ $m-\frac{s^2}{2}$ = __$`r format(prob3.a, scientific = F)`$__
+
+_How does this compare with the average log return mu computed in part 1.)?_
+
+__Answer:__ This is a close approximation to the original value of mu. We should note the extremely small sample size (250), and that a larger sample size (2.5m) produces a closer approximation:
+
+```{r, prob3_b, echo = T}
+
+set.seed(2015)
+
+logRet <- rnorm(2500000, mu, sigma)
+netRet <- exp(logRet) - 1
+
+prob3.b <- round(mean(netRet) - sd(netRet)^2/2, 5)
+
+```
+
+__2.5m samples = $`r prob3.b`$__
+
+Their equality can be proven analytically through a mathematical theorem called Ito's Lemma that lies at the foundation of Black-Scholes options pricing formula. 
+Their numerical equality is not that good here because Ito's Lemma assumes we can divide a period into infinitesimally small sub-periods. 
+
+So divide a year into 25,000 sub-periods (think of these sub-periods roughly as minutes) instead.
+
+```{r, prob3_c, echo = T}
+
+set.seed(2015)
+
+trading.periods <- 25e3
+
+min_from_days <- function(days) {
+  60 * 6.5 * days
+}
+
+min.avg <- annual.ret / trading.periods
+min.sd <- annual.vol / sqrt(trading.periods)
+
+min.logRet <- rnorm( min_from_days(250), min.avg, min.sd)
+min.netRet <- exp(min.logRet) - 1
+
+new.m <- mean(min.netRet)
+new.s <- sd(min.netRet)
+
+new.mu <- mean(min.logRet)
+new.sigma <- sd(min.logRet)
+
+prob3.c <- round(new.m - new.s^2/2, 5)
+
+```
+
+Compare the new mu (average log return per minute) with the new $m-\frac{s^2}{2}$ (m is now the average net return per minute). 
+
++ New mu = $`r format(round(new.mu, 5 ), scientific=F)`$
++ New $m-\frac{s^2}{2}$ = $`r format(prob3.c, 5, scientific=F)`$
+
+Also, compare the new sigma (standard deviation of log returns per minute) with the new s (standard deviation of net return per minute).
+
++ New sigma: __`r round(new.sigma, 5)`__
++ New s: __`r round(new.s, 5)`__
+
+\newpage
+
+### Problem 4
+
++ If we assume that the stock's initial price is $1, what is the expected value of its log price log(P(t)) after t minutes expressed in terms of *mu*?
+
+__Assuming__:
+\begin{center}
+
+$\mu$ is the average daily log return,
+
+$\sigma$ is the standard deviation of the daily log return
+
+There are $x$ minutes in a day, then 1 day = $x$ minutes and 1 minute = $\frac{1}{x}$ day
+
+\end{center}
+For some minute $i$,
+\begin{center}
+
+$\mathbb{E}(r/minute)$ = $\mathbb{E}(r_i)$ = $\frac{\mu}{\sigma}$
+
+
+$\mathbb{V}(r/minute)$ = $\mathbb{V}(r_i)$ = $\frac{\sigma^2}{x^2}$
+
+$\mathbb{\sigma}(r/minute)$ = $\frac{\sigma}{x}$
+
+\end{center}
+
+The expected return after $t$ minutes is,
+
+\begin{center}
+
+$P_0 = 1$
+
+$P_t = P_0( 1 + R_1)$ ... $(1 + R_t)$
+
+$log(P_t) = (log P_0) + log(1 + R_1) + log( 1 + R_t)$
+
+$P_t = log(P_0) + r_1 + r_2 + r_t$
+
+Since $log(1) = 0$
+
+$P_t = \sum_{i=1}^{t}{r_i}$
+
+$\mathbb{E}(P_t)$ = $\mathbb{E}(\sum_{i=1}^{t}{r_i})$, 
+
+$\mathbb{E}(r_i) = \frac{\mu}{x}$
+
+\end{center}
+
++ And what is the expected value of its price P(t) expressed in terms of *mu* and *sigma*? 
+
+\begin{center}
+
+$\mathbb{V}(P_t) = \mathbb{V}(\sum_{i=1}^{t}{r_i})) = t\frac{\sigma^2}{x^2}$
+
+$\mathbb{E}(P_t) = t\frac{\sigma}{x}$
+
+\end{center}
+
++ Finally, express these expected values in terms of m and s instead.
+
+\begin{center}
+
+$m P_t = \frac{s}{x}\sqrt{t}$
+
+\end{center}
+
+### Problem 5
+
+The continuously compounded rate of growth of a stock is log(P(t))/t. 
+
++ What is the expected continuously compounded rate of growth of the stock in part __4__?
+
+\begin{center}
+
+$\frac{P_t}{t} = \sum_{i=1}^{t} \frac{r_i}{t}$
+
+$\mathbb{E}[\frac{P_t}{t}] = \mathbb{E}[\sum_ \frac{r_t}{t}] = t\frac{\frac{\mu}{x}}{t}$
+
+$\mathbb{E}[\frac{P_t}{t}] = \frac{\mu}{x}$
+
+\end{center}

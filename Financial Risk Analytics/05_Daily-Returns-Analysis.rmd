@@ -1,0 +1,357 @@
+---
+title: ''
+mainfont: Arial
+fontsize: 12pt
+documentclass: report
+header-includes:
+- \PassOptionsToPackage{table}{xcolor}
+- \usepackage{caption}
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \usepackage[table]{xcolor}
+- \usepackage{fancyhdr}
+- \usepackage{boldline}
+- \usepackage{tipa}
+   \definecolor{headergrey}{HTML}{545454}
+   \definecolor{msdblue}{HTML}{1C93D1}
+   \pagestyle{fancy}
+   \setlength\headheight{30pt}
+   \rhead{\color{headergrey}\today}
+   \fancyhead[L]{\color{headergrey}Moretz, Brandon}
+   \fancyhead[C]{\Large\bfseries\color{headergrey}Daily Returns Analysis}
+   \rfoot{\color{headergrey}Module 5}
+   \lfoot{\color{headergrey}MSDS 451}
+   \fancyfoot[C]{\rmfamily\color{headergrey}Financial and Risk Analytics}
+geometry: left = 1cm, right = 1cm, top = 2cm, bottom = 3cm
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document:
+    fig_caption: yes
+    latex_engine: xelatex
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r knitr_setup, include = FALSE}
+
+# DO NOT ADD OR REVISE CODE HERE
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, dev = 'png')
+options(knitr.table.format = "latex")
+
+```
+
+```{r report_setup, message = FALSE, warning = FALSE, include = FALSE}
+
+library(data.table, quietly = TRUE, warn.conflicts = FALSE)
+
+assignInNamespace("cedta.pkgEvalsUserCode", c(data.table:::cedta.pkgEvalsUserCode, "rtvs"), "data.table")
+
+library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggrepel, quietly = TRUE, warn.conflicts = FALSE)
+library(ggthemes, quietly = TRUE, warn.conflicts = FALSE)
+library(knitr, quietly = TRUE, warn.conflicts = FALSE)
+library(kableExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(Rblpapi, quietly = TRUE, warn.conflicts = FALSE)
+library(scales, quietly = TRUE, warn.conflicts = FALSE)
+library(pander, quietly = TRUE, warn.conflicts = FALSE)
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(formattable, quietly = TRUE, warn.conflicts = FALSE)
+library(grid, quietly = TRUE, warn.conflicts = FALSE)
+library(gridExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(png, quietly = TRUE, warn.conflicts = FALSE)
+library(extrafont, quietly = TRUE, warn.conflicts = FALSE)
+library(tinytex, quietly = TRUE, warn.conflicts = FALSE)
+library(stringr, quietly = TRUE, warn.conflicts = FALSE)
+library(lubridate, quietly = TRUE, warn.conflicts = FALSE)
+library(reshape2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggrepel, quietly = TRUE, warn.conflicts = FALSE)
+library(mnormt, quietly = TRUE, warn.conflicts = FALSE)
+library(Ecdat, quietly = TRUE, warn.conflicts = FALSE)
+library(MASS, quietly = TRUE, warn.conflicts = FALSE)
+library(copula, quietly = TRUE, warn.conflicts = FALSE)
+library(fGarch, quietly = TRUE, warn.conflicts = FALSE)
+library(forecast, quietly = TRUE, warn.conflicts = FALSE)
+library(tseries, quietly = TRUE, warn.conflicts = FALSE)
+library(gmodels, quietly = TRUE, warn.conflicts = FALSE)
+library(plotly, quietly = TRUE, warn.conflicts = FALSE)
+
+options(tinytex.verbose = TRUE)
+suppressMessages(library("tidyverse"))
+
+pretty_kable <- function(data, title, dig = 2) {
+  kable(data, caption = title, digits = dig) %>%
+    kable_styling(bootstrap_options = c("striped", "hover")) %>%
+      kableExtra::kable_styling(latex_options = "hold_position")
+}
+
+theme_set(theme_light())
+
+# Theme Overrides
+theme_update(plot.title = element_text(hjust = 0.5),
+             axis.text.x = element_text(size = 10),
+             axis.text.y = element_text(size = 10),
+             axis.title = element_text(face = "bold", size = 12, colour = "steelblue4"),
+             legend.position = "top", legend.title = element_blank())
+
+data.dir <- "D:/Projects/MSDS-RiskAnalytics/datasets/"
+
+```
+
+```{r pander_setup, include = FALSE}
+
+knitr::opts_chunk$set(comment = NA)
+
+panderOptions('table.alignment.default', function(df)
+    ifelse(sapply(df, is.numeric), 'right', 'left'))
+panderOptions('table.split.table', Inf)
+panderOptions('big.mark', ",")
+panderOptions('keep.trailing.zeros', TRUE)
+
+```
+
+### Problem Background
+######  Fitting Time Series Models
+
+In this lab we are going to fit time series models to data sets consisting of daily returns on various instruments.
+
+First, we will look a set of CRSP daily returns.
+
+```{r, CRSP_data, echo = T}
+
+data("CRSPday")
+
+crsp <- CRSPday[, 7]
+
+```
+
+### Problem 1
+###### Explain what "lag" means in the two ACF plots. Why does lag differ between the plots?
+
+```{r, crsp_acf, echo = T}
+
+p1 <- ggAcf(crsp)
+p2 <- ggAcf(as.numeric(crsp))
+
+grid.arrange(p1, p2, nrow =2)
+
+```
+
+
+```{r, crsp_peek, echo = T}
+
+head(crsp) # peek the ts object
+
+```
+
+__Lag__ is a function of the frequency of the time series object _crsp_, which set the unit of time inverval represented by each data point. 
+
+From the quick summary of the data, we see that the frequency is 365 (days/year), so the first plot represents and interval of 1/365, or $`r round(1/365, 5)`$. When we cast the data to a pure numeric representation (_as.vector_), this truncates the frequency property from the time series object, and the default reverts to 7/365, or $`r round(7/365, 5)`$. The charts have the same data, just displayed on different time scales.
+
+###### At what values of lag are there significant autocorrelations in the CRSP returns?
+
+Let's grab the data from the plot for analysis.
+
+```{r, crsp_lag_diagnostic, echo = T}
+
+vals <- as.data.table(p2$data)[, .(Acf = Freq, Lag = lag)]
+
+sig.vals <- vals[vals$Acf > 0.05 | vals$Acf < -0.05]
+
+pretty_kable(sig.vals, "Significant Autocorrelations", dig = 2)
+
+```
+
+We can see the lags with the most significant values are at: 1, 7 and 16.
+
+###### For which of these values do you think the statistical significance might be due to chance?
+
+We can run a Ljung-Box test on these lags to further test for significance which test successive lags for stronger confidence.
+
+```{r, Ljung-box_1, echo = T}
+Box.test(crsp, lag = 1, type = "Ljung-Box")
+```
+
+At lag 1, we strongly reject the null hypothesis and conclude serial correlation. 
+
+```{r, Ljung-box_7, echo = T}
+Box.test(crsp, lag = 7, type = "Ljung-Box")
+```
+
+At lag 7, we still reject the null and conclude there is serial correlation, but with less confidence than at 1 lag.
+
+```{r, Ljung-box_16, echo = T}
+Box.test(crsp, lag = 16, type = "Ljung-Box")
+```
+
+At lag 16, we accept the null hypothesis and conclude this is i.i.d, and the correlation is from randomness.
+
+### Problem 2
+
+Next, we will fit AR(1) and AR(2) models to the CRSP returns:
+
+```{r, ar-1-_model, echo = T}
+(fit1 <- arima(crsp, order = c(1, 0, 0)))
+```
+
+```{r, ar-2-_model, echo = T}
+(fit2 <- arima(crsp, order = c(2, 0, 0)))
+```
+
+In comparing these two models we would take the one with lower Akaike information criterion (AIC), or Bayesian information criterion (BIC).
+
+```{r, model-summary, echo = T}
+
+pretty_kable(data.table(Model = c("AR(1)", "AR(2)"), 
+                      AIC = c(AIC(fit1), AIC(fit2)), 
+                      BIC = c(BIC(fit1), BIC(fit2))), "Model Fit Comparison")
+```
+
+Here, we would take AR(1) over AR(2), irrespective of the preferred metric.
+
+
+#### Find a 95% confidence interval for $\phi$ for the AR(1) model:
+
+```{r, ar_model_ci, echo = T}
+
+alpha <- 0.05
+
+ci <- fit1$model$phi + 0.019 * qnorm(1 - (alpha/2)) * c(-1, 1)
+
+pretty_kable(data.table(Lower = ci[1], Upper = ci[2]), "95\\% Confidence Interval", dig = 5)
+
+```
+
+### Problem 3
+
+Next, will look at EURUSD currency rate data on a one minute interval.
+
+
+```{r, eurusd_data, fig.height=4.5, echo = T}
+
+eurusd <- read.csv(paste0(data.dir, "EURUSD mid.csv"), 
+                   header = F)
+colnames(eurusd) <- c("Date", "Bar", "Open", "High", "Low", "Close")
+
+prices <- eurusd[, "Close"]
+n <- length(prices)
+returns <- diff(prices)/prices[1:(n-1)]
+
+dat <- data.table(ret = returns)
+
+ggplot(dat, aes(ret)) +
+   geom_histogram(aes(fill = ..count..), breaks = pretty(dat$ret)) +
+   labs(title = "EUR/USD 1 Minute Returns")
+
+pretty_kable(data.table( Mean = mean(returns), SD = sd(returns)), "EUR/USD Summary", dig = 5)
+
+```
+
+### Problem 4
+
+Now we will find the 'best' AR(p) model, __m0__, for the return series using the Bayesian information criterion.
+
+For the training data, we will use the first 1M bars.
+
+```{r, model_train, echo = T}
+
+train.size <- 1000000
+test.size <- 999
+
+data.train <- returns[1:train.size]
+data.test <- returns[train.size+1:test.size]
+
+stopifnot(length(data.train) == train.size & length(data.test) == test.size)
+
+summary(m0.train <- auto.arima(data.train, max.p = 20, max.q = 0, d = 0, ic = "bic"))
+
+```
+
+### "Best" Model
+
+The best AR(p) model for the EUR/USD rates is an __AR(4)__ model.
+
+### Model Evaluation
+
+Now, using the AR model chosen above, make a 1-step forecast of the EURUSD return in the next minute from bar 1,000,001 to 1,001,000.
+
+```{r, model_results_viz, fig.height=4, echo = T}
+
+summary(m0.test <- Arima(data.test, model = m0.train))
+
+m0.forecast <- forecast(m0.test)
+m0.results <- data.table(Actual = data.test, 
+                         Pred = m0.forecast$fitted, 
+                         Residual = m0.forecast$residuals)[, 
+                                                           Obs := .I]
+m0.results[, CDir := sign(Actual) == sign(Pred)]
+m0.forecast
+suppressWarnings({
+   f1 <- ggplot(m0.results, aes(x = Obs)) +
+     geom_line(aes(y = Actual), lwd = .5, col = "black", alpha = .8) +
+     geom_line(aes(y = Pred), lwd = 1.5, col = "cornflowerblue", alpha = .7, linetype = 2) +
+     labs(title = "EUR/USD 1-M Return, Actual vs Predicted", y = "Return")
+   
+   f2 <- ggplot(m0.results, aes(x = Obs)) +
+      geom_line(aes(y = Actual)) +
+      geom_line(aes(y = ifelse(CDir == T, Actual, NA)), col = "green") +
+      geom_line(aes(y = ifelse(CDir == F, Actual, NA)), col = "red") +
+      labs(y = "Direction")
+   
+   grid.arrange(f1, f2, nrow = 2)
+})
+
+```
+
+What percentage of times this forecast correctly predicts the sign of the return of the next minute (from the 1,000,001th to the 1,001,000th bar)?
+
+```{r, model_results, echo = T}
+
+m0.accuracy <- m0.results[, .(Correct = sum(CDir), Total = .N, 
+                             Pct = (sum(CDir) / .N) * 100)]
+
+pretty_kable(m0.accuracy, "m0 Prediction Accuracy", dig = 2)
+
+```
+
+\newpage
+
+### Model Backtest
+
+Now, we attempt to backtest a trading strategy based on this AR model and compute the cumulative return of such a strategy.
+
+```{r, model_backtest, echo = T}
+
+data.backtest <- eurusd[(train.size+1):(train.size+test.size),]
+
+stopifnot(nrow(data.backtest) == test.size)
+
+transaction.fee <- .0 # Assume Frictionless Env
+
+data.backtest$Dir <- ifelse(sign(m0.results$Pred) == 1, "Long", 
+                            ifelse(sign(m0.results$Pred) == -1, "Short", ""))
+
+data.backtest$Return <- 
+   ifelse(data.backtest$Dir == "Long", 
+          ((data.backtest$Close - data.backtest$Open)/data.backtest$Close) * ( 1 - transaction.fee),
+          ifelse(data.backtest$Dir == "Short",
+                 ((data.backtest$Open-data.backtest$Close)/data.backtest$Open) * ( 1 - transaction.fee), 0))
+
+data.backtest$CumRet <- sapply(data.backtest$Return + 1, cumprod) - 1
+
+cumret.disp <- round(data.backtest$CumRet[test.size], 4) * 100
+
+```
+
+Strategy backtest cumulative return: __`r round(cumret.disp, 4)`%__

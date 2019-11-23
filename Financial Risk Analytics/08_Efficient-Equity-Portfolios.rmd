@@ -1,0 +1,304 @@
+---
+title: ''
+mainfont: Arial
+fontsize: 12pt
+documentclass: report
+header-includes:
+- \PassOptionsToPackage{table}{xcolor}
+- \usepackage{caption}
+- \usepackage{amssymb}
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \usepackage[table]{xcolor}
+- \usepackage{fancyhdr}
+- \usepackage{boldline}
+- \usepackage{tipa}
+   \definecolor{headergrey}{HTML}{545454}
+   \definecolor{msdblue}{HTML}{1C93D1}
+   \pagestyle{fancy}
+   \setlength\headheight{30pt}
+   \rhead{\color{headergrey}\today}
+   \fancyhead[L]{\color{headergrey}Moretz, Brandon}
+   \fancyhead[C]{\Large\bfseries\color{headergrey}Efficient Equity Portfolios}
+   \rfoot{\color{headergrey}Module 8}
+   \lfoot{\color{headergrey}MSDS 451}
+   \fancyfoot[C]{\rmfamily\color{headergrey}Financial and Risk Analytics}
+geometry: left = 1cm, right = 1cm, top = 2cm, bottom = 3cm
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document:
+    fig_caption: yes
+    latex_engine: xelatex
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r knitr_setup, include = FALSE}
+
+# DO NOT ADD OR REVISE CODE HERE
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, dev = 'png')
+options(knitr.table.format = "latex")
+
+```
+
+```{r report_setup, message = FALSE, warning = FALSE, include = FALSE}
+
+library(data.table, quietly = TRUE, warn.conflicts = FALSE)
+
+assignInNamespace("cedta.pkgEvalsUserCode", c(data.table:::cedta.pkgEvalsUserCode, "rtvs"), "data.table")
+
+library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggrepel, quietly = TRUE, warn.conflicts = FALSE)
+library(ggthemes, quietly = TRUE, warn.conflicts = FALSE)
+library(knitr, quietly = TRUE, warn.conflicts = FALSE)
+library(kableExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(Rblpapi, quietly = TRUE, warn.conflicts = FALSE)
+library(scales, quietly = TRUE, warn.conflicts = FALSE)
+library(pander, quietly = TRUE, warn.conflicts = FALSE)
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(formattable, quietly = TRUE, warn.conflicts = FALSE)
+library(grid, quietly = TRUE, warn.conflicts = FALSE)
+library(gridExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(png, quietly = TRUE, warn.conflicts = FALSE)
+library(extrafont, quietly = TRUE, warn.conflicts = FALSE)
+library(tinytex, quietly = TRUE, warn.conflicts = FALSE)
+library(stringr, quietly = TRUE, warn.conflicts = FALSE)
+library(lubridate, quietly = TRUE, warn.conflicts = FALSE)
+library(reshape2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggrepel, quietly = TRUE, warn.conflicts = FALSE)
+library(mnormt, quietly = TRUE, warn.conflicts = FALSE)
+library(Ecdat, quietly = TRUE, warn.conflicts = FALSE)
+library(MASS, quietly = TRUE, warn.conflicts = FALSE)
+library(copula, quietly = TRUE, warn.conflicts = FALSE)
+library(fGarch, quietly = TRUE, warn.conflicts = FALSE)
+library(forecast, quietly = TRUE, warn.conflicts = FALSE)
+library(tseries, quietly = TRUE, warn.conflicts = FALSE)
+library(gmodels, quietly = TRUE, warn.conflicts = FALSE)
+library(rugarch, quietly = TRUE, warn.conflicts = FALSE)
+library(GGally, quietly = TRUE, warn.conflicts = FALSE)
+library(quadprog, quietly = TRUE, warn.conflicts = FALSE)
+
+options(tinytex.verbose = TRUE)
+suppressMessages(library("tidyverse"))
+
+pretty_kable <- function(data, title, dig = 2) {
+  kable(data, caption = title, digits = dig) %>%
+    kable_styling(bootstrap_options = c("striped", "hover")) %>%
+      kableExtra::kable_styling(latex_options = "hold_position")
+}
+
+theme_set(theme_light())
+
+# Theme Overrides
+theme_update(axis.text.x = element_text(size = 10),
+             axis.text.y = element_text(size = 10),
+             plot.title = element_text(hjust = 0.5, size = 16, face = "bold", color = "darkgreen"),
+             axis.title = element_text(face = "bold", size = 12, colour = "steelblue4"),
+             plot.subtitle = element_text(face = "bold", size = 8, colour = "darkred"),
+             legend.title = element_text(size = 12, color = "darkred", face = "bold"),
+             legend.position = "right", legend.title.align=0.5,
+             panel.border = element_rect(linetype = "solid", 
+                                         colour = "lightgray"), 
+             plot.margin = unit(c( 0.1, 0.1, 0.1, 0.1), "inches"))
+
+data.dir <- "D:/Projects/MSDS-RiskAnalytics/datasets/"
+
+```
+
+```{r pander_setup, include = FALSE}
+
+knitr::opts_chunk$set(comment = NA)
+
+panderOptions('table.alignment.default', function(df)
+    ifelse(sapply(df, is.numeric), 'right', 'left'))
+panderOptions('table.split.table', Inf)
+panderOptions('big.mark', ",")
+panderOptions('keep.trailing.zeros', TRUE)
+
+```
+
+#### Problem Background
+
+Write an R program to find the efficient frontier, the tangency portfolio, and the minimum variance portfolio, and plot on "risk-reward space" the location of each of the six stocks, the efficent frontier, the tangency portfolio, and the line of efficient portfolios.
+
+Use the constraints that, $-0.1 \le w_j \le 0.5$ for each stock.
+
+The first constraint limits the short sales but does not rule them out completely.
+
+The second constraint prohibits more than 50% of the investment in any single stock.
+
+Assume that the annual risk-free rate is 3%.
+
+```{r, stock_prices, echo = T}
+
+data <- data.table(read.csv(paste0(data.dir, "Stock_Bond.csv"),
+                 header = T))
+
+prices <- cbind(GM = data$GM_AC, F = data$F_AC, CAT = data$CAT_AC, UTX = data$UTX_AC,
+                MRK = data$MRK_AC, IBM = data$IBM_AC)
+
+n <- nrow(prices)
+
+returns <- data.table(100 * (prices[2:n,] / prices[1:(n-1),] - 1))
+
+```
+
+```{r, pairplot, echo = F, fig.height=4.5, fig.width=8}
+ggpairs(returns)
+```
+
+```{r echo = T}
+
+cov.mat <- cov(returns)
+mean.vec <- colMeans(returns)
+sd.vec <- sqrt(diag(cov.mat))
+
+rfr <- 3.0 / 365 # Daily risk-free rate
+
+n.sims <- 500 # Simulations to find optimal allocation.
+n.stocks <- ncol(prices) # Stocks to allocate.
+c.vec <- c(-.10, .50) # Allocations between -10% and 50%.
+
+# Storage.
+
+mu_p <- seq(min(mean.vec), max(mean.vec), length = n.sims)
+sd_p <- mu_p
+
+out.weights <- matrix(0, nrow = n.sims, ncol = n.stocks)
+
+# ?solve.QP
+
+A.mat <- cbind(rep(1, n.stocks), mean.vec)
+b.vec <- c(1, NaN)
+
+# Lower-bound
+A.mat <- cbind(A.mat, diag(1, n.stocks))
+b.vec <- c(b.vec, c.vec[1]*rep(1, n.stocks))
+
+# Upper-bound
+A.mat <- cbind(A.mat, -diag(1, n.stocks))
+b.vec <- c(b.vec, -c.vec[2]*rep(1, n.stocks))
+
+# Find the optimal portfolios for each target expected return.
+for ( i in 1:n.sims )
+{
+   # constraint vector
+   b.vec[2] = +mu_p[i]
+  
+   result =
+      solve.QP( Dmat = 2*cov.mat, 
+                dvec = rep(0, n.stocks),
+                Amat = A.mat, 
+                bvec = b.vec, 
+                meq = 2)
+  
+   sd_p[i] = sqrt(result$value)
+   out.weights[i, ] = result$solution
+}
+
+# Find maximum Sharpe's ratio
+sharpe.ratios <- ( mu_p - rfr) / sd_p
+
+# Find & save the tangency portfolio
+tangent.index <- which.max(sharpe.ratios)
+
+dt.tan.weights <- data.table(matrix(out.weights[tangent.index,], nrow = 1))
+colnames(dt.tan.weights) <- colnames(prices)
+      
+# Find & save the minimum variance portfolio
+minvar.index <- which.min(sd_p)
+
+dt.minvar.weights <- data.table(matrix(out.weights[minvar.index,], nrow = 1))
+colnames(dt.minvar.weights) <- colnames(prices)
+
+# Portfolio weights must sum to 100%.
+stopifnot(round(sum(dt.tan.weights), 4) == 1 &
+          round(sum(dt.minvar.weights), 4) == 1)
+
+# Find Sharpe Ratio of tangent portfolio.
+tangent.sharpe <- sharpe.ratios[tangent.index]
+
+```
+
+```{r echo=T, fig.height=8, fig.width=8}
+
+# Plot Efficent Frontier
+
+ef.data <- data.table(cbind(sd_p, mu_p))[, Index := .I]
+ef.data[, ef := ifelse(Index > minvar.index, mu_p, NA)]
+
+stocks.data <- data.table(x = sd.vec, y = mean.vec, symbol = colnames(prices))
+
+suppressWarnings(print({
+   ggplot(ef.data) +
+      
+      geom_abline(aes(intercept = rfr, slope = tangent.sharpe), col = "cornflowerblue", lty = 4, lwd = 1) +
+      
+      geom_point(aes(sd_p, mu_p), col = "darkred", lwd = .15, alpha = .7) +
+      geom_point(aes(sd_p, ef), col = "darkgreen", lwd = .15, alpha = .7) +
+      
+      geom_point(aes(0, rfr), col = "darkgreen", size = 3) +
+      geom_text_repel(data = ef.data[tangent.index],
+                  aes(0, rfr, label = "Risk-free Rate"),
+                  size = 4, box.padding = 1.5,
+                  force = 15, segment.size  = 0.2,
+                  segment.color = "grey50", direction = "x") +
+   
+      geom_point(data = ef.data[tangent.index], aes(sd_p, mu_p), col = "lightblue", size = 3) +
+      geom_text_repel(data = ef.data[tangent.index],
+                  aes(sd_p, mu_p, label = "Tangency"),
+                  size = 4, box.padding = 2,
+                  force = 30, segment.size  = 0.2,
+                  segment.color = "grey50",
+                  direction     = "x") +
+   
+      geom_point(data = ef.data[minvar.index], aes(sd_p, mu_p), col = "darkgrey", size = 3) +
+      geom_text_repel(data = ef.data[minvar.index],
+                  aes(sd_p, mu_p, label = "Minimum Variance"),
+                  size = 4, box.padding = 1.5, force = 15,
+                  segment.size  = 0.2, segment.color = "grey50",
+                  direction = "x") +
+
+      geom_text_repel(data = ef.data[tangent.index - floor((tangent.index-minvar.index)/2),],
+                  aes(sd_p, mu_p, label = "Efficent Frontier"),
+                  size = 4, box.padding = 1.5,
+                  force = 20, segment.size  = 0.2,
+                  segment.color = "grey50",
+                  direction = "x") +
+   
+      geom_text(data = stocks.data, aes(x, y, label = symbol, col = symbol)) +
+      
+      geom_text(data = stocks.data, aes(mean(x), mean(y), nudge_y = -.5,
+                                        label = "Individual Stocks"), color = "black", size = 5, alpha = .2) +
+      
+      scale_y_continuous(limits = c(0, .1), labels = scales::percent_format(scale = 100)) +
+      scale_x_continuous(limits = c(0, 2.5)) +
+      
+      labs(x = "Risk", y = "Return") +
+      guides(color = "none") +
+      theme(axis.line = element_line(colour = "black"),
+         panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank(),
+         panel.border = element_blank(),
+         panel.background = element_blank())
+}))
+
+```
+
+```{r echo=F}
+
+pretty_kable(cbind(Portfolio = c("Tangency", "Minimum Variance"), rbind(dt.tan.weights, dt.minvar.weights)), 
+             "Optimal Portfolio Weights", dig = 5)
+```

@@ -1,0 +1,306 @@
+---
+title: ''
+mainfont: Arial
+fontsize: 12pt
+documentclass: report
+header-includes:
+- \PassOptionsToPackage{table}{xcolor}
+- \usepackage{caption}
+- \usepackage{amssymb}
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \usepackage[table]{xcolor}
+- \usepackage{fancyhdr}
+- \usepackage{boldline}
+- \usepackage{tipa}
+   \definecolor{headergrey}{HTML}{545454}
+   \definecolor{msdblue}{HTML}{1C93D1}
+   \pagestyle{fancy}
+   \setlength\headheight{30pt}
+   \rhead{\color{headergrey}\today}
+   \fancyhead[L]{\color{headergrey}Moretz, Brandon}
+   \fancyhead[C]{\Large\bfseries\color{headergrey}VaR of a Stock Portfolio}
+   \rfoot{\color{headergrey}Module 7}
+   \lfoot{\color{headergrey}MSDS 451}
+   \fancyfoot[C]{\rmfamily\color{headergrey}Financial and Risk Analytics}
+geometry: left = 1cm, right = 1cm, top = 2cm, bottom = 3cm
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document:
+    fig_caption: yes
+    latex_engine: xelatex
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r knitr_setup, include = FALSE}
+
+# DO NOT ADD OR REVISE CODE HERE
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, dev = 'png')
+options(knitr.table.format = "latex")
+
+```
+
+```{r report_setup, message = FALSE, warning = FALSE, include = FALSE}
+
+library(data.table, quietly = TRUE, warn.conflicts = FALSE)
+
+assignInNamespace("cedta.pkgEvalsUserCode", c(data.table:::cedta.pkgEvalsUserCode, "rtvs"), "data.table")
+
+library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggrepel, quietly = TRUE, warn.conflicts = FALSE)
+library(ggthemes, quietly = TRUE, warn.conflicts = FALSE)
+library(knitr, quietly = TRUE, warn.conflicts = FALSE)
+library(kableExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(Rblpapi, quietly = TRUE, warn.conflicts = FALSE)
+library(scales, quietly = TRUE, warn.conflicts = FALSE)
+library(pander, quietly = TRUE, warn.conflicts = FALSE)
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(formattable, quietly = TRUE, warn.conflicts = FALSE)
+library(grid, quietly = TRUE, warn.conflicts = FALSE)
+library(gridExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(png, quietly = TRUE, warn.conflicts = FALSE)
+library(extrafont, quietly = TRUE, warn.conflicts = FALSE)
+library(tinytex, quietly = TRUE, warn.conflicts = FALSE)
+library(stringr, quietly = TRUE, warn.conflicts = FALSE)
+library(lubridate, quietly = TRUE, warn.conflicts = FALSE)
+library(reshape2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggrepel, quietly = TRUE, warn.conflicts = FALSE)
+library(mnormt, quietly = TRUE, warn.conflicts = FALSE)
+library(Ecdat, quietly = TRUE, warn.conflicts = FALSE)
+library(MASS, quietly = TRUE, warn.conflicts = FALSE)
+library(copula, quietly = TRUE, warn.conflicts = FALSE)
+library(fGarch, quietly = TRUE, warn.conflicts = FALSE)
+library(forecast, quietly = TRUE, warn.conflicts = FALSE)
+library(tseries, quietly = TRUE, warn.conflicts = FALSE)
+library(gmodels, quietly = TRUE, warn.conflicts = FALSE)
+library(rugarch, quietly = TRUE, warn.conflicts = FALSE)
+
+options(tinytex.verbose = TRUE)
+suppressMessages(library("tidyverse"))
+
+pretty_kable <- function(data, title, dig = 2) {
+  kable(data, caption = title, digits = dig) %>%
+    kable_styling(bootstrap_options = c("striped", "hover")) %>%
+      kableExtra::kable_styling(latex_options = "hold_position")
+}
+
+theme_set(theme_light())
+
+# Theme Overrides
+theme_update(axis.text.x = element_text(size = 10),
+             axis.text.y = element_text(size = 10),
+             plot.title = element_text(hjust = 0.5, size = 16, face = "bold", color = "darkgreen"),
+             axis.title = element_text(face = "bold", size = 12, colour = "steelblue4"),
+             plot.subtitle = element_text(face = "bold", size = 8, colour = "darkred"),
+             legend.title = element_text(size = 12, color = "darkred", face = "bold"),
+             legend.position = "right", legend.title.align=0.5,
+             panel.border = element_rect(linetype = "solid", 
+                                         colour = "lightgray"), 
+             plot.margin = unit(c( 0.1, 0.1, 0.1, 0.1), "inches"))
+
+data.dir <- "D:/Projects/MSDS-RiskAnalytics/datasets/"
+
+```
+
+```{r pander_setup, include = FALSE}
+
+knitr::opts_chunk$set(comment = NA)
+
+panderOptions('table.alignment.default', function(df)
+    ifelse(sapply(df, is.numeric), 'right', 'left'))
+panderOptions('table.split.table', Inf)
+panderOptions('big.mark', ",")
+panderOptions('keep.trailing.zeros', TRUE)
+
+```
+
+#### Problem 1
+
+Suppose the risk measure $\Re$ is $VaR(\alpha)$ for some $\alpha$.
+
+Let $P_1$ and $P_2$ be two portfolios whos returns have a joint normal distribution with means $\mu_1$ and $\mu_2$, standard deviations $\sigma_1$ and $\sigma_2$, and correlation $\rho$.
+
+Suppose the initial investments are $S_1$ and $S_2$.
+
+Show that $\Re(P_1 + P_2) \le \Re(P_1) + \Re(P_2)$ under joint normality.
+
+#### Solution:
+
+From __19.12__, we know that:
+
+\setlength{\leftskip}{2cm}
+
+$\widehat{VaR}_{P_i}^{norm}(\alpha) = -S_i \ * \{\hat\mu_{P_i} + \phi^{-1}(\alpha)\hat\sigma_{P_i}\}$
+
+$\ldots = -S_i \ * \{\hat\mu_{P_i} + Z_\alpha\hat\sigma_{P_i}\}$
+
+\setlength{\leftskip}{0pt}
+
+Where $S_i$ is the initial value of the portfolio $P_i$ for $i$ in 1, 2. Let the portfolio weights, $w_i$,
+
+\setlength{\leftskip}{2cm}
+   
+$w_1 = \frac{S_1}{S_1 + S_2}$, $w_2 = 1 - w_1$, so that $w_1 + w_2 = 1$.
+
+\setlength{\leftskip}{0pt}
+
+From __16.1__ and __16.3__, we know that,
+
+\setlength{\leftskip}{2cm}
+
+$\mathbb{E}(R_p) = \mu_P = w_1\mu_1 + w_2\mu_2$
+
+$\sigma^2_p = w_1\sigma^2_1 + w_2\sigma^2_1 + 2w_1w_2\rho_{12}\sigma_1\sigma_2$
+
+\setlength{\leftskip}{0pt}
+
+Where $\rho \le 1$, $w_1$ > 0 and $w_2$ > 0.\newline
+
+Let $\rho_{P_{12}} \le w_1\sigma_1 + w_2\sigma_2$ and $\alpha < 0.5$*,\newline
+
+then $Z_\alpha < 0$, so that:
+
+\setlength{\leftskip}{2cm}
+
+$Z_\alpha\sigma_p \ge w_1Z_\alpha\sigma_1 + w_2Z_\alpha\sigma_2$
+
+\setlength{\leftskip}{0pt}
+
+Adding portfolio means from above,
+
+\setlength{\leftskip}{2cm}
+
+$\mu_p + Z_\alpha\sigma_p \ge w_1\mu_1 + w_1Z_\alpha\sigma_1 + w_2\mu_2 + w_2Z_\alpha\sigma_2$
+
+$\ldots = w_1(\mu_1 + Z_\alpha\sigma_1) + w_2(\mu_2 + Z_\alpha\sigma_2)$
+
+\setlength{\leftskip}{0pt}
+
+Multiplying both sides by -S,
+
+\setlength{\leftskip}{2cm}
+
+$-S\{\mu_p + Z_\alpha\sigma_p\} \le -Sw_1(\mu_1 + Z_\alpha\sigma_1) - Sw_2(\mu_2 + Z_\alpha\sigma_2)$
+
+$\ldots = -S_1(\mu_1 + Z_\alpha\sigma_1) - S_2(\mu_2 + Z_\alpha\sigma_2)$
+
+\setlength{\leftskip}{0pt}
+
+Again using __19.12__,
+
+\setlength{\leftskip}{2cm}
+
+$VaR_{p}^{norm}(\alpha) \le VaR_{p_1}^{norm}(\alpha) + VaR_{p_2}^{norm}(\alpha)$\newline\newline
+
+\setlength{\leftskip}{0pt}
+
+*Since we are interested in tail events.
+
+\newpage
+
+#### Problem 2
+
+```{r, stock_prices, echo = T, fig.height = 4}
+
+data <- read.csv(paste0(data.dir, "Stock_Bond.csv"),
+                 header = T)
+
+prices <- as.matrix(data[1:500, c(3, 5, 7, 9, 11)])
+
+n <- nrow(prices)
+
+returns <- apply(prices, 2, FUN = function( p ){ 
+   p[-1] / p[-n] - 1
+})
+
+```
+
+
++ What are the sample mean vector and sample covariance matrix of the 499 returns on these stocks?
+
+```{r, stock_stats, echo = T}
+
+stock.means <- colMeans(returns)
+stock.cov <- cov(returns)
+
+```
+
+```{r, stock_means, echo = F}
+
+mean_df <- as.data.frame(stock.means)
+colnames(mean_df) <- c("mu")
+
+pretty_kable(mean_df, "Stock Mean Returns", dig = 5)
+
+```
+
+```{r, stock_cov, echo = F}
+
+pretty_kable(stock.cov, "Covariance Matrix", dig = 5)
+
+```
+
+\newpage
+
++ How many shares of each stock should one buy to invest $50 million in an equally weighted portfolio?
+
+```{r, stock_shares, echo = T}
+
+capital <- 5e7
+
+n.stocks <- ncol(prices)
+n.shares <- as.data.frame((capital/n.stocks)/prices[500,])
+
+pretty_kable(data.table(Stock = rownames(n.shares), 
+                        Shares = comma(n.shares[,1])), "Equal Weighted Shares")
+
+```
+
+```{r, VaR_setup, echo = T}
+
+VaR_N = function( alpha, mu, sig, S ) {
+   - S * ( mu + qnorm(alpha) * sig  )
+}
+
+stock.weight <- 1/n.stocks
+port.weights <- rep( stock.weight, n.stocks )
+
+port.ret <- sum(stock.weight * stock.means)
+port.sd <- sqrt(port.weights %*% stock.cov %*% port.weights)
+
+```
+
++ What is the one-day VaR(0.1)$^*$ for this equally weighted portfolio? 
+
+```{r, VaR_1day, echo = T}
+
+var1d <- VaR_N(0.1, port.ret, port.sd, capital)
+
+```
+
+One-day _VaR(.01)_ = `r comma(var1d)`
+
++ What is the five-day VaR(0.1)$^*$ for this portfolio?
+
+```{r, VaR_5day, echo = T}
+
+var5d <- VaR_N(0.1, 5 * port.ret, sqrt(5) * port.sd, capital)
+
+```
+
+Five-day _VaR(.01)_ = `r comma(var5d)`
+
+$^*$ VaR estimates assume normality of returns.
