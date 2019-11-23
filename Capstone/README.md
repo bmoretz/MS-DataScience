@@ -9,4 +9,4 @@
 <p>Final investor pitch-deck for the project.</p>
 
 <h3>Quantum Capital - Dashboard</h3>
-<p>The <a href="https://bmoretz.shinyapps.io/quantumcapital/">investor dashboard</a> I developed as part of this project..</p>
+<p>The <a href="https://bmoretz.shinyapps.io/quantumcapital/" target="_blank">investor dashboard</a> I developed as part of this project..</p>
