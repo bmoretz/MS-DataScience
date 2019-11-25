@@ -1,0 +1,261 @@
+---
+title: ''
+mainfont: Arial
+fontsize: 12pt
+documentclass: report
+header-includes:
+- \PassOptionsToPackage{table}{xcolor}
+- \usepackage{caption}
+- \usepackage{amssymb}
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \usepackage[table]{xcolor}
+- \usepackage{fancyhdr}
+- \usepackage{boldline}
+- \usepackage{tipa}
+   \definecolor{headergrey}{HTML}{545454}
+   \definecolor{msdblue}{HTML}{1C93D1}
+   \pagestyle{fancy}
+   \setlength\headheight{30pt}
+   \rhead{\color{headergrey}\today}
+   \fancyhead[L]{\color{headergrey}Moretz, Brandon}
+   \fancyhead[C]{\Large\bfseries\color{headergrey}Fama-French Model}
+   \rfoot{\color{headergrey}Module 9}
+   \lfoot{\color{headergrey}MSDS 451}
+   \fancyfoot[C]{\rmfamily\color{headergrey}Financial and Risk Analytics}
+geometry: left = 1cm, right = 1cm, top = 2cm, bottom = 3cm
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document:
+    fig_caption: yes
+    latex_engine: xelatex
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r knitr_setup, include = FALSE}
+
+# DO NOT ADD OR REVISE CODE HERE
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, dev = 'png')
+options(knitr.table.format = "latex")
+
+```
+
+```{r report_setup, message = FALSE, warning = FALSE, include = FALSE}
+
+library(data.table, quietly = TRUE, warn.conflicts = FALSE)
+
+assignInNamespace("cedta.pkgEvalsUserCode", c(data.table:::cedta.pkgEvalsUserCode, "rtvs"), "data.table")
+
+library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggrepel, quietly = TRUE, warn.conflicts = FALSE)
+library(ggthemes, quietly = TRUE, warn.conflicts = FALSE)
+library(knitr, quietly = TRUE, warn.conflicts = FALSE)
+library(kableExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(Rblpapi, quietly = TRUE, warn.conflicts = FALSE)
+library(scales, quietly = TRUE, warn.conflicts = FALSE)
+library(pander, quietly = TRUE, warn.conflicts = FALSE)
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(formattable, quietly = TRUE, warn.conflicts = FALSE)
+library(grid, quietly = TRUE, warn.conflicts = FALSE)
+library(gridExtra, quietly = TRUE, warn.conflicts = FALSE)
+library(png, quietly = TRUE, warn.conflicts = FALSE)
+library(extrafont, quietly = TRUE, warn.conflicts = FALSE)
+library(tinytex, quietly = TRUE, warn.conflicts = FALSE)
+library(stringr, quietly = TRUE, warn.conflicts = FALSE)
+library(lubridate, quietly = TRUE, warn.conflicts = FALSE)
+library(reshape2, quietly = TRUE, warn.conflicts = FALSE)
+library(ggrepel, quietly = TRUE, warn.conflicts = FALSE)
+library(mnormt, quietly = TRUE, warn.conflicts = FALSE)
+library(Ecdat, quietly = TRUE, warn.conflicts = FALSE)
+library(MASS, quietly = TRUE, warn.conflicts = FALSE)
+library(copula, quietly = TRUE, warn.conflicts = FALSE)
+library(fGarch, quietly = TRUE, warn.conflicts = FALSE)
+library(forecast, quietly = TRUE, warn.conflicts = FALSE)
+library(tseries, quietly = TRUE, warn.conflicts = FALSE)
+library(gmodels, quietly = TRUE, warn.conflicts = FALSE)
+library(rugarch, quietly = TRUE, warn.conflicts = FALSE)
+library(GGally, quietly = TRUE, warn.conflicts = FALSE)
+library(quadprog, quietly = TRUE, warn.conflicts = FALSE)
+
+options(tinytex.verbose = TRUE)
+suppressMessages(library("tidyverse"))
+
+pretty_kable <- function(data, title, dig = 2) {
+  kable(data, caption = title, digits = dig) %>%
+    kable_styling(bootstrap_options = c("striped", "hover")) %>%
+      kableExtra::kable_styling(latex_options = "hold_position")
+}
+
+theme_set(theme_light())
+
+# Theme Overrides
+theme_update(axis.text.x = element_text(size = 10),
+             axis.text.y = element_text(size = 10),
+             plot.title = element_text(hjust = 0.5, size = 16, face = "bold", color = "darkgreen"),
+             axis.title = element_text(face = "bold", size = 12, colour = "steelblue4"),
+             plot.subtitle = element_text(face = "bold", size = 8, colour = "darkred"),
+             legend.title = element_text(size = 12, color = "darkred", face = "bold"),
+             legend.position = "right", legend.title.align=0.5,
+             panel.border = element_rect(linetype = "solid", 
+                                         colour = "lightgray"), 
+             plot.margin = unit(c( 0.1, 0.1, 0.1, 0.1), "inches"))
+
+data.dir <- "D:/Projects/MSDS-RiskAnalytics/datasets/"
+
+```
+
+```{r pander_setup, include = FALSE}
+
+knitr::opts_chunk$set(comment = NA)
+
+panderOptions('table.alignment.default', function(df)
+    ifelse(sapply(df, is.numeric), 'right', 'left'))
+panderOptions('table.split.table', Inf)
+panderOptions('big.mark', ",")
+panderOptions('keep.trailing.zeros', TRUE)
+
+```
+
+#### Problem Background
+
+In this lab we are going to start with a one-factor CAPM model, and then extend it to the three-factor Fama-French model.
+
+We will use the data set for Stocks, FX and Bonds from 2004-2005.
+
+Data for the Fama-French factors are avilable Prof. Kenneth French's website.
+
+Where RF is the risk-free rate and Mkt.RF, SMB and HML are the Fama-French factors.
+
+```{r, factor_model, echo = T}
+
+# Stock/Bond/FX data.
+stocks <- as.data.table(read.csv(paste0(data.dir, "Stock_FX_Bond_2004_to_2005.csv"), 
+                                 header=T))
+stocks$Date <- as.Date(stocks$Date, format = "%d-%b-%y")
+stocks_subset <- stocks[, .(Date, GM_AC, F_AC, UTX_AC, MRK_AC)]
+stocks_diff <- data.table(Date = stocks_subset[-1]$Date,
+                          100 * apply(log(stocks_subset[, .(GM_AC, F_AC, UTX_AC, MRK_AC)]), 2, diff))
+
+# Fama-French data.
+FF_data <- as.data.table(read.table(paste0(data.dir, "FamaFrenchDaily.txt"), 
+                                    header=T))
+FF_data$Date <- as.Date(as.character(FF_data$date), format = "%Y%m%d")
+FF_data$date <- NULL
+
+# Combine into one data.table.
+consolidated.data <- merge(stocks_diff, FF_data, on = c("Date"))
+capm.data <- consolidated.data[, .(Date,
+                              GM = GM_AC - RF,
+                              Ford = F_AC - RF,
+                              UTX = UTX_AC - RF,
+                              Merck = MRK_AC - RF,
+                              Mkt.RF, SMB, HML, RF)]
+
+
+fit <- lm(as.matrix(cbind(GM, Ford, UTX, Merck)) 
+                   ~ Mkt.RF + SMB + HML, data = capm.data)
+```
+
+\newpage
+
+### 1.)  Which one(s) of the 4 stocks are "value" stocks, according to this model? How can you tell?
+
+```{r, echo=F}
+
+dt.ff <- as.data.table(coef(fit), keep.rownames = T)
+colnames(dt.ff)[1] <- 'Factor'
+dt.ff[1, 1] <- 'Alpha'
+pretty_kable(dt.ff, "Fama-French Model", dig = 5)
+```
+
+A "value" stock is one with a positive HML (high minus low) coefficent, which would be __GM__ and __Ford__. __Merck__ looks like a _"growth"_ stock, and UTX is somewhere in between a "growth" and "value" stock.
+
+### 2.) Fama-French model fits which stock best? Worst?
+
+```{r, echo = T}
+lm.stats <- summary(fit)
+
+dt.stats <- data.table(stat = c("R-Squared", "Adj. R-Squared"), 
+            GM = c(lm.stats$`Response GM`$r.squared, 
+                   lm.stats$`Response GM`$adj.r.squared),
+            Ford = c(lm.stats$`Response Ford`$r.squared,
+                     lm.stats$`Response Ford`$adj.r.squared),
+            UTX = c(lm.stats$`Response UTX`$r.squared,
+                    lm.stats$`Response UTX`$adj.r.squared),
+            Merck = c(lm.stats$`Response Merck`$r.squared,
+                      lm.stats$`Response Merck`$adj.r.squared))
+dt.stats[, 2:5] <- dt.stats[, 2:5] * 100
+pretty_kable(dt.stats, "Model Fit Statistics", dig = 2)
+
+```
+
+The Fama-French model fits __UTX__ the best, explaining roughtly 35% of the variance of the returns, and __Merck__ the worst, explaining about 6.6% of the return variance.
+
+### 3.) For UTX, which factor is most important besides the market return?
+
+For __UTX__ the most important factor outside the market return is SMB, or small minus big, at _-30%_. A strong negative relationship with SMB means it behaves, unsurprisingly, like a large cap stock.
+
+\newpage
+
+### 4.) Use the Fama-French model to predict the next day return of UTX. 
+
+Use the first 250 days (__the training set__) to fit the model. Note that this model will be different from the one above. Use this model to make 1-day forecasts for the rest of the data (__the test set__). 
+
+```{r, model_train, echo=T}
+
+utx.data <- capm.data[, .(Date, UTX, Mkt.RF, SMB, HML)]
+train.size <- 250
+test.size <- nrow(utx.data) - train.size
+
+train.data <- utx.data[1:train.size,]
+test.data <- utx.data[train.size+1:test.size,]
+
+stopifnot(nrow(train.data) == train.size & nrow(test.data) == test.size)
+
+summary(utx.fit <- lm(UTX ~ Mkt.RF + SMB + HML,
+                        data = train.data))
+
+```
+
+\newpage
+
++ What is the percentage of days in the test set where the sign of the forecast return agrees with that of the actual return? (sign=-1,0,1)
+
+```{r, echo=T}
+# Use the 1 day lagged prediction.
+# i.e, the sign of 1/3/05 close is using the FF data from 12/31/04.
+results <- data.table(Actual = test.data[-1]$UTX, 
+                      Pred = predict(utx.fit, newdata = head(test.data, -1)))
+results[, correct := sign(Actual) == sign(Pred)]
+results$Date <- test.data[-1]$Date
+
+pct.correct <- (nrow(results[correct == T]) / nrow(results)) * 100
+
+```
+
+Using the 3-factor model, we can correctly predict the sign of the next day return: __`r round(pct.correct, 2)`%__
+
+```{r, model_forecast, echo = T, fig.width=8}
+
+suppressWarnings(print({
+   ggplot(results, aes(x = Date)) +
+      geom_line(aes(y = Actual)) +
+      geom_line(aes(y = ifelse(correct == T, Actual, NA)), col = "darkgreen") +
+      geom_line(aes(y = ifelse(correct == F, Actual, NA)), col = "darkred") +
+      labs(title = "Fama-French 3-Factor Prediction")
+}))
+
+```
