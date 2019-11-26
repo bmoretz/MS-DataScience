@@ -2,7 +2,7 @@
 
 <p>This repository is a collection of all homework assignments completed for Northwestern University MSDS program in 'Financial & Risk Analytics' (MSDS 451). Each assignment includes a PDF, which was generated using the accompanying R Markdown file.</p>
   
-<h3>1 - Simulations</h3>
+<h3><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Financial%20Risk%20Analytics/01_Monte-Carlo.pdf">1 - Simulations</a></h3>
 
 <blockquote>
   
@@ -30,7 +30,7 @@
   
 </blockquote>
 
-<h3>2 - Stock Returns and Lognormal Distributions</h3>
+<h3><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Financial%20Risk%20Analytics/02_Stock-Returns-and-Lognormal-Distributions.pdf">2 - Stock Returns and Lognormal Distributions</a></h3>
 
 <blockquote>
   
@@ -58,7 +58,7 @@
   
 </blockquote>
 
-<h3>3 - Fitting a Bivariate t-Distribution</h3>
+<h3><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Financial%20Risk%20Analytics/03_Fitting-Bivariate-t-Distribution.pdf">3 - Fitting a Bivariate t-Distribution</a></h3>
 
 <blockquote>
   
@@ -85,8 +85,8 @@
   </ul>
   
 </blockquote>	
- 
-<h3>4 - Fitting Copula Models to Bivariate Returns</h3>
+
+<h3><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Financial%20Risk%20Analytics/04_Fitting-Copula-Models-Bivariate-Returns.pdf">4 - Fitting Copula Models to Bivariate Returns</a></h3>
 
 <blockquote>
   
@@ -114,7 +114,7 @@
   </ul>
 </blockquote>
 
-<h3>5 - Daily Returns Analysis</h3>
+<h3><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Financial%20Risk%20Analytics/05_Daily-Returns-Analysis.pdf">5 - Daily Returns Analysis</a></h3>
 
 <blockquote>
   
@@ -143,7 +143,7 @@
   
 </blockquote>
 
-<h3>6 - Black Monday</h3>
+<h3><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Financial%20Risk%20Analytics/06_Black-Monday.pdf">6 - Black Monday</a></h3>
 
 <blockquote>
   
@@ -170,7 +170,7 @@
   
 </blockquote>
 
-<h3>7 - Value at Risk</h3>
+<h3><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Financial%20Risk%20Analytics/07_Value-at-Risk.pdf">7 - Value at Risk</a></h3>
 
 <blockquote>
   
@@ -200,8 +200,7 @@ Show that ℜ(P1 + P2) ≤ ℜ(P1) + ℜ(P2) under joint normality.</p>
   
 </blockquote>    
   
-
-<h3>8 - Efficient Equity Portfolios</h3>
+<h3><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Financial%20Risk%20Analytics/08_Efficient-Equity-Portfolios.pdf">8 - Efficient Equity Portfolios</a></h3>
 
 <blockquote>
   
@@ -227,7 +226,7 @@ Show that ℜ(P1 + P2) ≤ ℜ(P1) + ℜ(P2) under joint normality.</p>
   
 </blockquote>
 
-<h3>9 - Fama-French Model</h3>
+<h3><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Financial%20Risk%20Analytics/09_Fama-French-Model.pdf">9 - Fama-French Model</a></h3>
 
 <blockquote>
   
