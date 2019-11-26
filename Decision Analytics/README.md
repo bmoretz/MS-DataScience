@@ -27,12 +27,11 @@ This course covers fundamental concepts, solution techniques, modeling approache
 	<li><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Decision%20Analytics/02_Allocation%20Model.R">Allocation Model - R</a></li>
 </ul>
 
-<h2>2 - Network Modeling & Integer Linear Programming</h2>
+<h2>3 - Nonlinear Programming, Multiobjective Programming, and Metaheuristics</h2>
 
-<h3><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/02_Marketing%20Campaign.pdf">Marketing Campaign</a></h3>
-<h3><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/02_Marketing%20Campaign.xlsx">Marketing Campaign - Model</a></h3>
+<h3><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/03_Toy%20Production.pdf">Toy Production</a></h3>
 
 <ul>
-	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/02_Allocation%20Model.xlsx">Allocation Model - Excel</a></li>
-	<li><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Decision%20Analytics/02_Allocation%20Model.R">Allocation Model - R</a></li>
+	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/03_Nonlinear%20Models.xlsx">Non-linear Models - Excel</a></li>
+	<li><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Decision%20Analytics/03_Nonlinear%20Models.ipynb">Non-linear Models - Python</a></li>
 </ul>
