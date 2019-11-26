@@ -1,5 +1,7 @@
 # Supervised Learning
 
+<p>This course introduces traditional statistics and data modeling for supervised learning problems, as employed in observational and experimental research. With supervised learning there is a clear distinction between explanatory and response variables. The objective is to predict responses, whether they be quantitative as with multiple regression or categorical as with logistic regression and multinomial logit models. Students work on research and programming assignments, exploring data, identifying appropriate models, and validating models. They utilize techniques for observational and experimental research design, data visualization, variable transformation, model diagnostics, and model selection.</p>
+
 <p>This repository is a collection of all homework assignments completed for Northwestern University MSDS program in 'Supervised Learning' (MSDS 410). Each assignment includes a PDF of the analysis conducted, and an R file developed to support the analysis.</p>
  
 <h2>Modeling</h2>
