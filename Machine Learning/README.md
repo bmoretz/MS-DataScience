@@ -60,7 +60,7 @@
   <li>Of the modeling methods examined in your study, which would you recommend to management, and why?</li>
   </ul>
   
-  <h4><a href="https://colab.research.google.com/github/bmoretz/MSDS-MachineLearning/blob/master/Assignment_03/Assignment_03.ipynb">Solution Overview</a></h4>
+  <h4><a href="https://colab.research.google.com/github/bmoretz/MSDS-MachineLearning/blob/master/Assignment_03/Assignment_03.ipynb" target="_blank">Solution Overview</a></h4>
   
   <p>An exercise in modelling consumer behaviors with a binary response variable - is customer likely to purchase a service or not? Model techniques include SciKit Learn 'KNeighborsClassifier', 'Naive Bayes' & 'Logistic Regression' as well as cross validation methods such as ROC curve.</p>
 
@@ -81,7 +81,7 @@
   <li>Reviewing the results of the random forests, which explanatory variables are most important in predicting home prices?</li>
   </ul>
   
-  <h4><a href="https://colab.research.google.com/github/bmoretz/MSDS-MachineLearning/blob/master/Assignment_04/Assignment_04.ipynb">Solution Overview</a></h4>
+  <h4><a href="https://colab.research.google.com/github/bmoretz/MSDS-MachineLearning/blob/master/Assignment_04/Assignment_04.ipynb" target="_blank">Solution Overview</a></h4>
   
   <p>This exercise builds on the linear regression models we developed for assignment 3 and uses the same data set. We drop the variable 'neighborhood' and use the remaining continuous data variables to build multiple models using SciKit Learn: Ridge, DecisionTreeRegressor, RandomForestRegressor, & GradientBoostingRegressor. By experimenting with bootstrapping and data transformation techniques (Log transform), we are able to build models that perform better than the regression models in assignment 3.</p>
 
@@ -102,7 +102,7 @@
   <li>Which neural network typology and hyperparameter settings would you recommend as being the most trustworthy?</li>
   </ul>
   
-  <h4><a href="https://colab.research.google.com/github/bmoretz/MSDS-MachineLearning/blob/master/Assignment_05/Assignment_05.ipynb">Solution Overview</a></h4>
+  <h4><a href="https://colab.research.google.com/github/bmoretz/MSDS-MachineLearning/blob/master/Assignment_05/Assignment_05.ipynb" target="_blank">Solution Overview</a></h4>
   
   <p>The Benchmark Experiment. Tested neural network structures should be explored within a benchmark experiment, a factorial design with at least two levels on each of two experimental factors (at least a 2x2 completely crossed design). But due to the time required to fit each neural network, we will observe only one trial for each cell in the design. Also, we will be using a simple training-and-test split with the split having been performed previously. That is, we use the training and test sets that come with <a href="https://en.wikipedia.org/wiki/MNIST_database">MNIST</a>.</p>
 
@@ -125,7 +125,7 @@
   <li>Would you recommend using PCA as a preliminary to machine learning classification? Explain your thinking?</li>
   </ul>
   
-  <h4><a href="https://colab.research.google.com/github/bmoretz/MSDS-MachineLearning/blob/master/Assignment_06/Assignment_06.ipynb">Solution Overview</a></h4>
+  <h4><a href="https://colab.research.google.com/github/bmoretz/MSDS-MachineLearning/blob/master/Assignment_06/Assignment_06.ipynb" target="_blank">Solution Overview</a></h4>
   
   <p>This exercise uses a random forest learning method for multiclass prediction of handwritten digits in the MNIST dataset. <a href="https://en.wikipedia.org/wiki/MNIST_database">(https://en.wikipedia.org/wiki/MNIST_database)</a> The challenge is to build a model that successfully assigns a predicted digit value that is equal to the handwritten one, while keeping the number of variables to a minimum to reduce processing times. The model techniques use Random Forest Classifier, and compares compute times when using all potential variables or a reduced data set using a PCA model that accounts for 95% of the variation in the data. For cross validation, we consider average F1 and precision scores as well as a confusion matrix to visually represent the multi-class output accuracy.</p>
 	
@@ -147,7 +147,7 @@
   <li>Part of this recommendation may concern information about the initial images themselves (input data for the classification task). What types of images work best?</li>
   </ul>
   
-  <h4><a href="https://colab.research.google.com/github/bmoretz/MSDS-MachineLearning/blob/master/Assignment_07/Assignment_07.ipynb">Solution Overview</a></h4>
+  <h4><a href="https://colab.research.google.com/github/bmoretz/MSDS-MachineLearning/blob/master/Assignment_07/Assignment_07.ipynb" target="_blank">Solution Overview</a></h4>
   
 <p>The objective of the analysis is to build a neural network that accurately classifies images of cats and dogs. The data set is a sub-set of the data used in the kaggle competition. It contains 12,500 cat pictures and 12,500 dog pictures. The example goes through the steps to prepare the data and assign values to Numpy arrays to concatenate, shape and scale the data easily. We then apply the layered DNN models developed for the previous assignment.</p>		
 
@@ -167,7 +167,7 @@
   <li>What can data scientists do to make language models more useful in customer service function?</li>
   </ul>
  
-  <h4><a href="https://colab.research.google.com/github/bmoretz/MSDS-MachineLearning/blob/master/Assignment_08/Assignment_08.ipynb">Solution Overview</a></h4>
+  <h4><a href="https://colab.research.google.com/github/bmoretz/MSDS-MachineLearning/blob/master/Assignment_08/Assignment_08.ipynb" target="_blank">Solution Overview</a></h4>
   
 <p>This assignment involves working with language models developed with pre-trained word vectors. We used sentences (sequences of words) to train language models for predicting movie review sentiment (thumbs-up versus thumbs-down). We study effects of word vector size, vocabulary size, and neural network structure (hyperparameters) on classification performance. We build on resources for recurrent neural networks (RNNs) as implemented in TensorFlow. RNNs are well suited to the analysis of sequences, as needed for natural language processing (NLP).</p>
 
