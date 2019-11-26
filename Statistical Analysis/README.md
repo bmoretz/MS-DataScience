@@ -11,9 +11,9 @@
 	<li><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Statistical%20Analysis/Analysis_02.md">Analysis, part 2</a></li>
 </ul>
 
-<h3>R Programming</h3>
+<h3>R Development</h3>
 
 <ul>
-	<li><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Statistical%20Analysis/Analysis_01.md">Analysis, part 1</a></li>
-	<li><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Statistical%20Analysis/Analysis_02.md">Analysis, part 2</a></li>
+	<li><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Statistical%20Analysis/Analysis_01.md">R Development, part 1</a></li>
+	<li><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Statistical%20Analysis/R-Programming_02.md">R Development, part 2</a></li>
 </ul>
