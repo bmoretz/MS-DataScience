@@ -10,5 +10,5 @@
 	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Capstone/Quantum-Capital-CEO-Deck.pdf">Executive Summary</a></li>
 	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Capstone/Quantum-Capital-Pitch-Deck.pdf">Investor Pitch Deck</a></li>
 	<li><a href="https://bmoretz.shinyapps.io/quantumcapital/">Investor Dashboard</a></li>
-	<li><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Capstone/BMoretz_Research.pdf">Strategy Research</a></li>
+	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Capstone/BMoretz_Research.pdf">Strategy Research</a></li>
 </ul>
