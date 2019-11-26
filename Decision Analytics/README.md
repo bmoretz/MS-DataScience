@@ -10,7 +10,7 @@ This course covers fundamental concepts, solution techniques, modeling approache
 
 <h2>1 - Introduction to Optimization & Linear Programming</h2>
 
-<h3><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Decision%20Analytics/01_Steel%20Production.pdf">Steel Production</a></h3>
+<h3><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/01_Steel%20Production.pdf">Steel Production</a></h3>
 
 <ul>
 	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/01_Furniture%20Production%20Model.xlsx">Furniture Production - Excel</a></li>
