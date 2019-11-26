@@ -22,7 +22,7 @@ This course covers fundamental concepts, solution techniques, modeling approache
 <h3><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/02_Marketing%20Campaign.pdf">Marketing Campaign</a></h3>
 
 <ul>
-	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/02_Marketing%20Campaign.xlsx">Marketing Campaign - Model</a></li>
+	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/02_Marketing%20Campaign.xlsx">Marketing Campaign - Excel</a></li>
 	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/02_Allocation%20Model.xlsx">Allocation Model - Excel</a></li>
 	<li><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Decision%20Analytics/02_Allocation%20Model.R">Allocation Model - R</a></li>
 </ul>
@@ -33,5 +33,21 @@ This course covers fundamental concepts, solution techniques, modeling approache
 
 <ul>
 	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/03_Nonlinear%20Models.xlsx">Non-linear Models - Excel</a></li>
+	<li><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Decision%20Analytics/03_Nonlinear%20Models.ipynb">Non-linear Models - Python</a></li>
+</ul>
+
+<h2>4 - Simulation and Markov Processes</h2>
+
+<ul>
+	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/03_Nonlinear%20Models.xlsx">Non-linear Models - Excel</a></li>
+	<li><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Decision%20Analytics/03_Nonlinear%20Models.ipynb">Non-linear Models - Python</a></li>
+</ul>
+
+<h2>5 - Queuing</h2>
+
+<h3><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Decision%20Analytics/05_Queuing%20Simulation.pdf">Queuing & Simulation</a></h3>
+
+<ul>
+	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/05_Simulation.xlsx">Queuing Simulation - Excel</a></li>
 	<li><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Decision%20Analytics/03_Nonlinear%20Models.ipynb">Non-linear Models - Python</a></li>
 </ul>
