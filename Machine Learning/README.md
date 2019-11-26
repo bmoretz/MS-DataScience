@@ -17,7 +17,7 @@
   <li>Guide data science curriculum planning</li>
   </ul>
   
-  <h4><a href="https://colab.research.google.com/github/bmoretz/MSDS-MachineLearning/blob/master/Assignment_01/Assignment_01.ipynb">Solution Overview</a></h4>
+  <h4><a href="https://colab.research.google.com/github/bmoretz/MSDS-MachineLearning/blob/master/Assignment_01/Assignment_01.ipynb" target="_blank">Solution Overview</a></h4>
   
   <p>This project is based on a collection of data from the ‘MSPA Software Survey’, in which the university gathered responses from students and faculty in relation to their own preferences and their perception of industry trends. The analysis provides code for data review in Python as well as initial data visualization tecqhniques and analysis of correlation.</p>
 
@@ -27,7 +27,7 @@
 
 <blockquote>
   
-  <h4><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Machine%20Learning/Term%20Deposit%20Participation.pdf">Management Problem</a></h4>
+  <h4><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Machine%20Learning/Term%20Deposit%20Participation.pdf" target="_blank">Management Problem</a></h4>
   
   <p>Imagine that you are advising the bank about machine learning methods to guide telephone marketing campaigns.</p>
   
