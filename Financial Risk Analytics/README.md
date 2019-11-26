@@ -1,5 +1,7 @@
 # Financial & Risk Analytics
 
+<p>Building upon probability theory and inferential statistics, this course provides an introduction to risk analytics. Examples from economics and finance show how to incorporate risk within regression and time series models. Monte Carlo simulation is used to demonstrate how variability in data affects uncertainty about model parameters. Additional topics include subjectivity in risk analysis, causal modeling, stochastic optimization, portfolio analysis, and risk model evaluation.</p>
+
 <p>This repository is a collection of all homework assignments completed for Northwestern University MSDS program in 'Financial & Risk Analytics' (MSDS 451). Each assignment includes a PDF, which was generated using the accompanying R Markdown file.</p>
   
 <h3><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Financial%20Risk%20Analytics/01_Monte-Carlo.pdf">1 - Simulations</a></h3>
