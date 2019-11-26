@@ -27,7 +27,7 @@
 
 <blockquote>
   
-  <h4><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Machine%20Learning/Term%20Deposit%20Participation.pdf">Management Problem</a></h4>
+  <h4><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Machine%20Learning/Term%20Deposit%20Participation.pdf">Management Problem</a></h4>
   
   <p>Imagine that you are advising the bank about machine learning methods to guide telephone marketing campaigns.</p>
   
