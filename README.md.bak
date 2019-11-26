@@ -39,7 +39,6 @@ For more information, please visit the <a href="https://sps.northwestern.edu/mas
 <p>The main objective of the project is to model the price movements and forecasts of energy commodities, including gasoline, heating oil, crude (WTI and Brent) and natural gas. We will be developing a proprietary data source derived from publicly available information published to the primary commodity exchanges. Using this bespoke dataset, our research efforts will be focused on using our domain-knowledge as well as our analytical and quantitative technical capabilities to develop predictive models as they relate to understanding the financial markets for energy commodities.</p>
 
 <ul>
-	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Capstone/Quantum-Capital-CEO-Deck.pdf">Executive Summary</a></li>
 	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Capstone/Quantum-Capital-Pitch-Deck.pdf">Investor Pitch Deck</a></li>
 	<li><a href="https://bmoretz.shinyapps.io/quantumcapital/" target="_blank">Investor Dashboard</a></p></li>
 </ul>
