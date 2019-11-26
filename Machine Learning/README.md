@@ -6,7 +6,7 @@
 
 <blockquote>
   
-  <h4><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Machine%20Learning/Program%20Objectives.pdf">Management Problem</a></h4>
+  <h4><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Machine%20Learning/Program%20Objectives.pdf">Management Problem</a></h4>
   
   <p>This project is based on a collection of data from the ‘MSPA Software Survey’, in which the university gathered responses from students and faculty in relation to their own preferences and their perception of industry trends. The analysis provides code for data review in Python as well as initial data visualization tecqhniques and analysis of correlation.</p>
   
