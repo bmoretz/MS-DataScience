@@ -20,9 +20,9 @@ This course covers fundamental concepts, solution techniques, modeling approache
 <h2>2 - Network Modeling & Integer Linear Programming</h2>
 
 <h3><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/02_Marketing%20Campaign.pdf">Marketing Campaign</a></h3>
-<h3><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/02_Marketing%20Campaign.xlsx">Marketing Campaign - Model</a></h3>
 
 <ul>
+	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/02_Marketing%20Campaign.xlsx">Marketing Campaign - Model</a></li>
 	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/02_Allocation%20Model.xlsx">Allocation Model - Excel</a></li>
 	<li><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Decision%20Analytics/02_Allocation%20Model.R">Allocation Model - R</a></li>
 </ul>
