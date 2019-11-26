@@ -39,15 +39,15 @@ This course covers fundamental concepts, solution techniques, modeling approache
 <h2>4 - Simulation and Markov Processes</h2>
 
 <ul>
-	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/03_Nonlinear%20Models.xlsx">Non-linear Models - Excel</a></li>
-	<li><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Decision%20Analytics/03_Nonlinear%20Models.ipynb">Non-linear Models - Python</a></li>
+	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/04_Markovian%20Models.xlsx">Markovian Models - Excel</a></li>
+	<li><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Decision%20Analytics/04_Markovian%20Models.R">Markovian Models - R</a></li>
 </ul>
 
 <h2>5 - Queuing</h2>
 
-<h3><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Decision%20Analytics/05_Queuing%20Simulation.pdf">Queuing & Simulation</a></h3>
+<h3><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Decision%20Analytics/05_Queuing%20%26%20Simulation.pdf">Queuing & Simulation</a></h3>
 
 <ul>
-	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/05_Simulation.xlsx">Queuing Simulation - Excel</a></li>
-	<li><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Decision%20Analytics/03_Nonlinear%20Models.ipynb">Non-linear Models - Python</a></li>
+	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Decision%20Analytics/05_Queuing%20%26%20Simulation.xlsx">Queuing & Simulation - Excel</a></li>
+	<li><a href="https://github.com/bmoretz/MS-DataScience/blob/master/Decision%20Analytics/05_Queuing%20%26%20Simulation.R">Queuing & Simulation - R</a></li>
 </ul>
