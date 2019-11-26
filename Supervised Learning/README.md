@@ -14,7 +14,7 @@
 <h2>Computational</h2>
 
 <ul>
-	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Supervised%20Learning/Comp_01_OLS_Linear_Regression.R">1 - Linear Regression</a></li>
+	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Supervised%20Learning/Comp_01_OLS_Linear_Regression.pdf">1 - Linear Regression</a></li>
 	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Supervised%20Learning/Comp_02_Statistical_Inference_lr.pdf">2 - Statistical Inference</a></li>
 	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Supervised%20Learning/Comp_03_OLS_Dummy_Coded.pdf">3 - OLS - Dummy Coding</a></li>
 	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Supervised%20Learning/Comp_04_Interpreting_ANCOVA.pdf">4 - Interpreting ANCOVA</a></li>
