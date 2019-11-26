@@ -7,8 +7,8 @@
 <ul>
 	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Supervised%20Learning/Modeling%20Assignment_01.pdf">1 - Exploratory Data Analyis</a></li>
 	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Supervised%20Learning/Modeling%20Assignment_02.pdf">2 - Interaction Modeling</a></li>
-	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Supervised%20Learning/Modeling%20Assignment_03.pdf">3 - "Best" predictive Model</a></li>
-	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Supervised%20Learning/Modeling%20Assignment_04.pdf">4 - "Dichotomous Models</a></li>
+	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Supervised%20Learning/Modeling%20Assignment_03.pdf">3 - "Best" Predictive Model</a></li>
+	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Supervised%20Learning/Modeling%20Assignment_04.pdf">4 - Dichotomous Models</a></li>
 </ul>
 
 <h2>Computational</h2>
@@ -21,4 +21,3 @@
 	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Supervised%20Learning/Comp_05_Logistic_Regression.pdf">5 - Logistic Regression</a></li>
 	<li><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Supervised%20Learning/Comp_06_Poisson_Zip_Regression.pdf">6 - Poisson & Zip Regression</a></li>
 </ul>
- 
