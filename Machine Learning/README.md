@@ -27,7 +27,7 @@
 
 <blockquote>
   
-  <h4><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Machine%20Learning/Term%20Deposit%20Participation.pdf" target="_blank">Management Problem</a></h4>
+  <h4><a href="https://github.com/bmoretz/MS-DataScience/raw/master/Machine%20Learning/Term%20Deposit%20Participation.pdf">Management Problem</a></h4>
   
   <p>Imagine that you are advising the bank about machine learning methods to guide telephone marketing campaigns.</p>
   
@@ -39,7 +39,7 @@
   </ul>
   <ul>
   
-  <h4><a href="https://colab.research.google.com/github/bmoretz/MSDS-MachineLearning/blob/master/Assignment_02/Assignment_02.ipynb">Solution Overview</a></h4>
+  <h4><a href="https://colab.research.google.com/github/bmoretz/MSDS-MachineLearning/blob/master/Assignment_02/Assignment_02.ipynb" target="_blank">Solution Overview</a></h4>
   
   <p>An exercise in modelling consumer behaviors with a binary response variable - is customer likely to purchase a service or not? Model techniques include SciKit Learn 'KNeighborsClassifier', 'Naive Bayes' & 'Logistic Regression' as well as cross validation methods such as ROC curve.</p>
 
