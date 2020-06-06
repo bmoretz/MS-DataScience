@@ -1,6 +1,7 @@
 *.html linguist-detectable=false
 *.htm inguist-detectable=false
 *.jmd linguist-detectable=true
+*.ipynb linguist-detectable=false
 
 *.html    linguist-generated=true
 *.htm    linguist-generated=true
