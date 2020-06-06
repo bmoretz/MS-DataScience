@@ -9,4 +9,3 @@
 *.jmd linguist-language=Julia
 *.ipynb linguist-language=Python
 *.rmd linguist-language=R
-*.Rmd linguist-language=R
